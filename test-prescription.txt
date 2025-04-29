@@ -1,0 +1,12 @@
+PRESCRIPTION
+
+Patient: Test User
+Doctor: Dr. Test Doctor
+License: 12345
+Date: April 28, 2025
+
+Medication: Amoxicillin 500mg
+Dosage: 1 tablet 3 times daily for 10 days
+Refills: 0
+
+Signature: Dr. Test Doctor 

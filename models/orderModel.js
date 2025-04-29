@@ -1,24 +1,51 @@
 import mongoose from 'mongoose';
 
 const orderItemSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  qty: { type: Number, required: true },
+  image: { type: String, required: true },
+  price: { type: Number, required: true },
+  
+  // Fields for drugs (pharmacy)
   drug: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
     ref: 'Drug'
   },
-  name: {
+  prescriptionVerified: {
+    type: Boolean,
+    default: false
+  },
+  prescriptionFile: {
+    type: String
+  },
+  
+  // Fields for products (mart)
+  product: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product'
+  },
+  
+  // Item type field to distinguish between drug and product
+  itemType: {
     type: String,
+    enum: ['drug', 'product'],
     required: true
-  },
-  quantity: {
-    type: Number,
-    required: true
-  },
-  price: {
-    type: Number,
-    required: true
-  },
-  prescription: String
+  }
+});
+
+// Validate that either drug or product is provided, but not both
+orderItemSchema.pre('validate', function(next) {
+  if ((this.drug && this.product) || (!this.drug && !this.product)) {
+    const error = new Error('Order item must have either a drug or a product reference, but not both');
+    return next(error);
+  }
+  
+  if ((this.itemType === 'drug' && !this.drug) || (this.itemType === 'product' && !this.product)) {
+    const error = new Error('Item type does not match the provided reference');
+    return next(error);
+  }
+  
+  next();
 });
 
 const orderSchema = new mongoose.Schema({
@@ -29,42 +56,41 @@ const orderSchema = new mongoose.Schema({
   },
   orderItems: [orderItemSchema],
   shippingAddress: {
-    street: {
-      type: String,
-      required: true
-    },
-    city: {
-      type: String,
-      required: true
-    },
-    state: {
-      type: String,
-      required: true
-    },
-    zipCode: {
-      type: String,
-      required: true
-    },
-    country: {
-      type: String,
-      required: true
-    }
+    address: { type: String, required: true },
+    city: { type: String, required: true },
+    postalCode: { type: String, required: true },
+    country: { type: String, required: true }
   },
   paymentMethod: {
     type: String,
-    required: true,
-    enum: ['credit_card', 'debit_card', 'cash_on_delivery']
+    required: true
   },
   paymentResult: {
-    id: String,
-    status: String,
-    update_time: String,
-    email_address: String
+    id: { type: String },
+    status: { type: String },
+    update_time: { type: String },
+    email_address: { type: String }
   },
   totalPrice: {
     type: Number,
     required: true,
-    default: 0
+    default: 0.0
+  },
+  isPaid: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  paidAt: {
+    type: Date
+  },
+  isDelivered: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
+  deliveredAt: {
+    type: Date
   },
   status: {
     type: String,
@@ -72,18 +98,15 @@ const orderSchema = new mongoose.Schema({
     enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
     default: 'pending'
   },
-  isPaid: {
-    type: Boolean,
-    required: true,
-    default: false
+  trackingNumber: {
+    type: String
   },
-  paidAt: Date,
-  isDelivered: {
-    type: Boolean,
-    required: true,
-    default: false
+  estimatedDelivery: {
+    type: Date
   },
-  deliveredAt: Date
+  notes: {
+    type: String
+  }
 }, {
   timestamps: true
 });

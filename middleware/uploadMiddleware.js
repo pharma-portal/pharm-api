@@ -22,6 +22,26 @@ const prescriptionStorage = new CloudinaryStorage({
     }
 });
 
+// Configure Cloudinary storage for mart product images
+const productStorage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'mart/products',
+        allowed_formats: ['jpg', 'jpeg', 'png'],
+        transformation: [{ width: 800, height: 800, crop: 'limit' }]
+    }
+});
+
+// Configure Cloudinary storage for mart category images
+const categoryStorage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'mart/categories',
+        allowed_formats: ['jpg', 'jpeg', 'png'],
+        transformation: [{ width: 600, height: 400, crop: 'limit' }]
+    }
+});
+
 // Multer upload configuration for drug images
 const uploadDrugImage = multer({
     storage: drugStorage,
@@ -50,6 +70,41 @@ const uploadPrescription = multer({
             cb(new Error('Please upload an image or PDF file.'), false);
         }
     }
-}).single('prescription');
+}).single('prescriptionFile');
 
-export { uploadDrugImage, uploadPrescription }; 
+// Multer upload configuration for mart product images
+const uploadProductImage = multer({
+    storage: productStorage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Not an image! Please upload only images.'), false);
+        }
+    }
+}).single('image');
+
+// Multer upload configuration for mart category images
+const uploadCategoryImage = multer({
+    storage: categoryStorage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Not an image! Please upload only images.'), false);
+        }
+    }
+}).single('image');
+
+export { 
+    uploadDrugImage, 
+    uploadPrescription,
+    uploadProductImage,
+    uploadCategoryImage
+}; 

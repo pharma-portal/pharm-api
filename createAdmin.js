@@ -25,7 +25,7 @@ const createAdminUser = async () => {
       // Create new admin user
       const adminUser = await User.create({
         name: 'Admin User',
-        email: 'admin@pharmacy.com',
+        email: 'admin@alleypharmacy.com',
         password: 'admin123', // Will be hashed by the pre-save middleware
         phone: '1234567890',
         role: 'admin'

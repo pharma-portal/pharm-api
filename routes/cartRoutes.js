@@ -1,7 +1,8 @@
 import express from 'express';
 import {
   getCart,
-  addToCart,
+  addDrugToCart,
+  addProductToCart,
   updateCartItem,
   removeFromCart,
   clearCart
@@ -11,11 +12,18 @@ import { uploadPrescription } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
+// Get cart and clear cart routes
 router.route('/')
   .get(optionalAuth, getCart)
-  .post(optionalAuth, uploadPrescription, addToCart)
   .delete(optionalAuth, clearCart);
 
+// Add pharmacy drug to cart
+router.post('/drug', optionalAuth, uploadPrescription, addDrugToCart);
+
+// Add mart product to cart
+router.post('/product', optionalAuth, addProductToCart);
+
+// Update and remove cart item routes
 router.route('/:id')
   .put(optionalAuth, updateCartItem)
   .delete(optionalAuth, removeFromCart);

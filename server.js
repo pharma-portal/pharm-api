@@ -8,6 +8,8 @@ import drugRoutes from './routes/drugRoutes.js';
 import cartRoutes from './routes/cartRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import guestOrderRoutes from './routes/guestOrderRoutes.js';
+import productRoutes from './routes/productRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 import scheduleStatusUpdates from './utils/orderStatusUpdater.js';
 
@@ -21,13 +23,17 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+// Pharmacy routes
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/drugs', drugRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/guest/orders', guestOrderRoutes);
+
+// Mart routes
+app.use('/api/mart/products', productRoutes);
+app.use('/api/mart/categories', categoryRoutes);
 
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));

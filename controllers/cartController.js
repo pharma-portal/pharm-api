@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import Cart from '../models/cartModel.js';
 import Drug from '../models/drugModel.js';
+import Product from '../models/productModel.js';
 
 // @desc    Get user cart
 // @route   GET /api/cart
@@ -9,7 +10,8 @@ const getCart = asyncHandler(async (req, res) => {
   if (req.user) {
     // For logged-in users, get cart from database
     const cart = await Cart.findOne({ user: req.user._id })
-      .populate('items.drug', 'name price image requiresPrescription');
+      .populate('items.drug', 'name price image requiresPrescription')
+      .populate('items.product', 'name price image');
     
     if (cart) {
       res.json(cart);
@@ -22,10 +24,10 @@ const getCart = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Add item to cart
-// @route   POST /api/cart
+// @desc    Add drug to cart (pharmacy)
+// @route   POST /api/cart/drug
 // @access  Public/Private
-const addToCart = asyncHandler(async (req, res) => {
+const addDrugToCart = asyncHandler(async (req, res) => {
   const { drugId, quantity } = req.body;
 
   const drug = await Drug.findById(drugId);
@@ -61,29 +63,31 @@ const addToCart = asyncHandler(async (req, res) => {
       cart = new Cart({
         user: req.user._id,
         items: [{
+          itemType: 'drug',
           drug: drugId,
           quantity,
           price: drug.price,
-          prescription: req.file ? req.file.path : undefined,
+          prescriptionFile: req.file ? req.file.path : undefined,
           requiresPrescription: drug.requiresPrescription
         }]
       });
     } else {
       const existingItem = cart.items.find(
-        item => item.drug.toString() === drugId
+        item => item.itemType === 'drug' && item.drug && item.drug.toString() === drugId
       );
 
       if (existingItem) {
         existingItem.quantity = quantity;
         if (req.file) {
-          existingItem.prescription = req.file.path;
+          existingItem.prescriptionFile = req.file.path;
         }
       } else {
         cart.items.push({
+          itemType: 'drug',
           drug: drugId,
           quantity,
           price: drug.price,
-          prescription: req.file ? req.file.path : undefined,
+          prescriptionFile: req.file ? req.file.path : undefined,
           requiresPrescription: drug.requiresPrescription
         });
       }
@@ -94,6 +98,7 @@ const addToCart = asyncHandler(async (req, res) => {
   } else {
     // For guest users, return the item details (cart will be managed on client side)
     res.status(201).json({
+      itemType: 'drug',
       drug: {
         _id: drug._id,
         name: drug.name,
@@ -103,6 +108,72 @@ const addToCart = asyncHandler(async (req, res) => {
       },
       quantity,
       price: drug.price
+    });
+  }
+});
+
+// @desc    Add product to cart (mart)
+// @route   POST /api/cart/product
+// @access  Public/Private
+const addProductToCart = asyncHandler(async (req, res) => {
+  const { productId, quantity } = req.body;
+
+  const product = await Product.findById(productId);
+  if (!product) {
+    res.status(404);
+    throw new Error('Product not found');
+  }
+
+  if (product.countInStock < quantity) {
+    res.status(400);
+    throw new Error('Not enough stock');
+  }
+
+  if (req.user) {
+    // For logged-in users, save to database
+    let cart = await Cart.findOne({ user: req.user._id });
+
+    if (!cart) {
+      cart = new Cart({
+        user: req.user._id,
+        items: [{
+          itemType: 'product',
+          product: productId,
+          quantity,
+          price: product.price
+        }]
+      });
+    } else {
+      const existingItem = cart.items.find(
+        item => item.itemType === 'product' && item.product && item.product.toString() === productId
+      );
+
+      if (existingItem) {
+        existingItem.quantity = quantity;
+      } else {
+        cart.items.push({
+          itemType: 'product',
+          product: productId,
+          quantity,
+          price: product.price
+        });
+      }
+    }
+
+    await cart.save();
+    res.status(201).json(cart);
+  } else {
+    // For guest users, return the item details (cart will be managed on client side)
+    res.status(201).json({
+      itemType: 'product',
+      product: {
+        _id: product._id,
+        name: product.name,
+        price: product.price,
+        image: product.image
+      },
+      quantity,
+      price: product.price
     });
   }
 });
@@ -127,10 +198,28 @@ const updateCartItem = asyncHandler(async (req, res) => {
     );
 
     if (cartItem) {
-      const drug = await Drug.findById(cartItem.drug);
-      if (drug.inStock < quantity) {
-        res.status(400);
-        throw new Error('Not enough stock');
+      if (cartItem.itemType === 'drug') {
+        const drug = await Drug.findById(cartItem.drug);
+        if (!drug) {
+          res.status(404);
+          throw new Error('Drug not found');
+        }
+        
+        if (drug.inStock < quantity) {
+          res.status(400);
+          throw new Error('Not enough stock');
+        }
+      } else if (cartItem.itemType === 'product') {
+        const product = await Product.findById(cartItem.product);
+        if (!product) {
+          res.status(404);
+          throw new Error('Product not found');
+        }
+        
+        if (product.countInStock < quantity) {
+          res.status(400);
+          throw new Error('Not enough stock');
+        }
       }
 
       cartItem.quantity = quantity;
@@ -141,29 +230,8 @@ const updateCartItem = asyncHandler(async (req, res) => {
       throw new Error('Item not found in cart');
     }
   } else {
-    // For guest users, just validate the quantity
-    const drug = await Drug.findById(req.params.id);
-    if (!drug) {
-      res.status(404);
-      throw new Error('Drug not found');
-    }
-
-    if (drug.inStock < quantity) {
-      res.status(400);
-      throw new Error('Not enough stock');
-    }
-
-    res.json({
-      drug: {
-        _id: drug._id,
-        name: drug.name,
-        price: drug.price,
-        image: drug.image,
-        requiresPrescription: drug.requiresPrescription
-      },
-      quantity,
-      price: drug.price
-    });
+    // For guest users, just acknowledge the update
+    res.json({ message: 'Quantity updated', quantity });
   }
 });
 
@@ -198,20 +266,24 @@ const removeFromCart = asyncHandler(async (req, res) => {
 const clearCart = asyncHandler(async (req, res) => {
   if (req.user) {
     // For logged-in users, clear database cart
-    const cart = await Cart.findOne({ user: req.user._id });
-
+    let cart = await Cart.findOne({ user: req.user._id });
+    
     if (cart) {
       cart.items = [];
       await cart.save();
     }
+    
+    res.json({ message: 'Cart cleared' });
+  } else {
+    // For guest users, just return success
+    res.json({ message: 'Cart cleared' });
   }
-
-  res.json({ message: 'Cart cleared' });
 });
 
 export {
   getCart,
-  addToCart,
+  addDrugToCart,
+  addProductToCart,
   updateCartItem,
   removeFromCart,
   clearCart
