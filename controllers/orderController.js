@@ -166,6 +166,11 @@ const verifyPrescription = asyncHandler(async (req, res) => {
     const item = order.orderItems.id(req.params.itemId);
 
     if (item) {
+      // Add itemType field if it doesn't exist (for backward compatibility)
+      if (!item.itemType && item.drug) {
+        item.itemType = 'drug';
+      }
+      
       item.prescriptionVerified = true;
       const updatedOrder = await order.save();
       res.json(updatedOrder);
