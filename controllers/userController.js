@@ -1,6 +1,8 @@
 import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
 import { generateToken } from '../middleware/authMiddleware.js';
+import jwt from 'jsonwebtoken';
+import { BlacklistModel } from '../models/userModel.js';
 
 // @desc    Register a new user
 // @route   POST /api/users/register
@@ -120,3 +122,43 @@ export {
   getUserProfile,
   updateUserProfile
 }; 
+
+// @desc    Logout user
+// @route   POST /api/users/logout
+// @access  Private
+export const userLogout = asyncHandler(async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401);
+      throw new Error('No token provided or invalid format');
+    }
+
+    const token = authHeader.split(' ')[1];
+    
+    // Verify the token is valid before blacklisting
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Add token to blacklist and immediately delete it
+    await BlacklistModel.create({
+      token,
+      expiresAt: new Date(decoded.exp * 1000)
+    });
+    
+    // Immediately delete the token from blacklist
+    await BlacklistModel.deleteOne({ token });
+
+    res.json({ message: 'User logged out successfully' });
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError') {
+      res.status(401);
+      throw new Error('Invalid token');
+    }
+    if (error.name === 'TokenExpiredError') {
+      res.status(401);
+      throw new Error('Token has expired');
+    }
+    throw error;
+  }
+}); 

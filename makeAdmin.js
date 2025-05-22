@@ -11,7 +11,7 @@ const makeAdmin = async () => {
     console.log('Connected to MongoDB:', conn.connection.host);
 
     // First, find the user
-    const existingUser = await User.findOne({ email: 'admin@pharmacy.com' });
+    const existingUser = await User.findOne({ email: 'admin@alleypharmacy.com' });
     
     if (!existingUser) {
       console.log('User not found. Creating new admin user...');
@@ -19,7 +19,7 @@ const makeAdmin = async () => {
       // Create new admin user
       const newAdmin = await User.create({
         name: 'Admin User',
-        email: 'admin@pharmacy.com',
+        email: 'admin@alleypharmacy.com',
         password: 'admin123',
         phone: '1234567890',
         role: 'admin'

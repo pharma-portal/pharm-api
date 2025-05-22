@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import validator from 'validator';
+import { model } from 'mongoose';
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -54,3 +55,21 @@ userSchema.methods.matchPassword = async function(enteredPassword) {
 
 const User = mongoose.model('User', userSchema);
 export default User; 
+
+const blacklistSchema = new mongoose.Schema({
+  token: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  expiresAt: {
+    type: Date,
+    required: true
+  }
+});
+
+blacklistSchema.index({ expiresAt: 1 }, {
+  expireAfterSeconds: 0
+});
+
+export const BlacklistModel = model('Blacklist', blacklistSchema);
