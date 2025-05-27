@@ -13,20 +13,17 @@ const createAdminUser = async () => {
     // Check if admin already exists
     const existingAdmin = await User.findOne({ email: 'admin@alleypharmacy.com' });
     if (existingAdmin) {
-      if (existingAdmin.role === 'admin') {
-        console.log('Admin user already exists');
-      } else {
-        // Update to admin if user exists but is not admin
-        existingAdmin.role = 'admin';
-        await existingAdmin.save();
-        console.log('User updated to admin role');
-      }
+      // Force update password
+      existingAdmin.password = 'admin123';
+      existingAdmin.role = 'admin';
+      await existingAdmin.save();
+      console.log('Admin user updated with new password');
     } else {
       // Create new admin user
       const adminUser = await User.create({
         name: 'Admin User',
         email: 'admin@alleypharmacy.com',
-        password: 'admin123', // Will be hashed by the pre-save middleware
+        password: 'admin123',
         phone: '1234567890',
         role: 'admin'
       });

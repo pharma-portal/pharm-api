@@ -63,8 +63,8 @@ const getAllOrders = asyncHandler(async (req, res) => {
       ...order.toObject(),
       orderType: 'registered',
       customerInfo: {
-        name: order.user.name,
-        email: order.user.email,
+        name: order.user?.name || 'Unknown User',
+        email: order.user?.email || 'No email',
         type: 'registered'
       }
     })),
@@ -72,9 +72,9 @@ const getAllOrders = asyncHandler(async (req, res) => {
       ...order.toObject(),
       orderType: 'guest',
       customerInfo: {
-        name: order.name,
-        email: order.email,
-        phone: order.phone,
+        name: order.name || 'Unknown Guest',
+        email: order.email || 'No email',
+        phone: order.phone || 'No phone',
         type: 'guest'
       }
     }))
