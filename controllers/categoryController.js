@@ -1,64 +1,54 @@
 import asyncHandler from 'express-async-handler';
 import Category from '../models/categoryModel.js';
+import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
 
 // @desc    Get all categories
-// @route   GET /api/mart/categories
+// @route   GET /api/categories
 // @access  Public
 const getCategories = asyncHandler(async (req, res) => {
-  // Get top-level categories (no parent)
-  const parentCategories = await Category.find({ parent: null, isActive: true })
-    .sort({ displayOrder: 1, name: 1 });
-  
-  res.json(parentCategories);
+  const { type } = req.query;
+  const query = type ? { type } : {};
+
+  const categories = await Category.find(query)
+    .populate('parent', 'name')
+    .sort('name');
+
+  res.json(categories);
 });
 
-// @desc    Get all categories with their subcategories
-// @route   GET /api/mart/categories/tree
+// @desc    Get category tree
+// @route   GET /api/categories/tree
 // @access  Public
 const getCategoryTree = asyncHandler(async (req, res) => {
-  // Get all categories
-  const allCategories = await Category.find({ isActive: true }).sort({ displayOrder: 1, name: 1 });
-  
-  // Create a map for efficient lookup
-  const categoriesMap = {};
-  allCategories.forEach(category => {
-    categoriesMap[category._id] = {
-      ...category.toObject(),
-      children: []
-    };
-  });
-  
-  // Build the tree structure
-  const rootCategories = [];
-  allCategories.forEach(category => {
-    if (category.parent) {
-      // This is a child category
-      if (categoriesMap[category.parent]) {
-        categoriesMap[category.parent].children.push(categoriesMap[category._id]);
-      }
-    } else {
-      // This is a root category
-      rootCategories.push(categoriesMap[category._id]);
-    }
-  });
-  
-  res.json(rootCategories);
+  const { type } = req.query;
+  const query = type ? { type } : {};
+
+  const categories = await Category.find(query)
+    .populate('parent', 'name')
+    .sort('name');
+
+  const buildTree = (items, parentId = null) => {
+    return items
+      .filter(item => item.parent?._id?.toString() === parentId?.toString())
+      .map(item => ({
+        ...item.toObject(),
+        children: buildTree(items, item._id)
+      }));
+  };
+
+  const tree = buildTree(categories);
+  res.json(tree);
 });
 
-// @desc    Get a single category by ID with its products
-// @route   GET /api/mart/categories/:id
+// @desc    Get single category
+// @route   GET /api/categories/:id
 // @access  Public
 const getCategoryById = asyncHandler(async (req, res) => {
-  const category = await Category.findById(req.params.id);
+  const category = await Category.findById(req.params.id)
+    .populate('parent', 'name');
 
   if (category) {
-    // Find subcategories
-    const subcategories = await Category.find({ parent: category._id, isActive: true });
-    
-    res.json({
-      ...category.toObject(),
-      subcategories
-    });
+    res.json(category);
   } else {
     res.status(404);
     throw new Error('Category not found');
@@ -66,83 +56,108 @@ const getCategoryById = asyncHandler(async (req, res) => {
 });
 
 // @desc    Create a category
-// @route   POST /api/mart/categories
+// @route   POST /api/categories
 // @access  Private/Admin
 const createCategory = asyncHandler(async (req, res) => {
-  const { name, description, image, parent, displayOrder } = req.body;
+  const { name, description, type, parent } = req.body;
 
-  const category = new Category({
+  const categoryExists = await Category.findOne({ name, type });
+
+  if (categoryExists) {
+    res.status(400);
+    throw new Error('Category already exists');
+  }
+
+  let imageUrl = '';
+  if (req.file) {
+    const result = await uploadToCloudinary(req.file.path, 'categories');
+    imageUrl = result.secure_url;
+  }
+
+  const category = await Category.create({
     name,
     description,
-    image: image || 'default-category.jpg',
+    type,
     parent: parent || null,
-    displayOrder: displayOrder || 0,
-    isActive: true
+    image: imageUrl
   });
 
-  const createdCategory = await category.save();
-  res.status(201).json(createdCategory);
-});
-
-// @desc    Update a category
-// @route   PUT /api/mart/categories/:id
-// @access  Private/Admin
-const updateCategory = asyncHandler(async (req, res) => {
-  const { name, description, image, parent, displayOrder, isActive } = req.body;
-
-  const category = await Category.findById(req.params.id);
-
   if (category) {
-    // Check for circular reference
-    if (parent && parent.toString() === req.params.id) {
-      res.status(400);
-      throw new Error('Category cannot be its own parent');
-    }
-    
-    // Verify that the parent exists if specified
-    if (parent) {
-      const parentCategory = await Category.findById(parent);
-      if (!parentCategory) {
-        res.status(400);
-        throw new Error('Parent category not found');
-      }
-    }
-    
-    category.name = name || category.name;
-    category.description = description || category.description;
-    category.image = image || category.image;
-    category.parent = parent !== undefined ? parent : category.parent;
-    category.displayOrder = displayOrder !== undefined ? displayOrder : category.displayOrder;
-    category.isActive = isActive !== undefined ? isActive : category.isActive;
-
-    const updatedCategory = await category.save();
-    res.json(updatedCategory);
+    res.status(201).json(category);
   } else {
-    res.status(404);
-    throw new Error('Category not found');
+    res.status(400);
+    throw new Error('Invalid category data');
   }
 });
 
+// @desc    Update a category
+// @route   PUT /api/categories/:id
+// @access  Private/Admin
+const updateCategory = asyncHandler(async (req, res) => {
+  const { name, description, type, parent } = req.body;
+
+  const category = await Category.findById(req.params.id);
+
+  if (!category) {
+    res.status(404);
+    throw new Error('Category not found');
+  }
+
+  const categoryExists = await Category.findOne({
+    name,
+    type,
+    _id: { $ne: req.params.id }
+  });
+
+  if (categoryExists) {
+    res.status(400);
+    throw new Error('Category already exists');
+  }
+
+  let imageUrl = category.image;
+  if (req.file) {
+    if (category.image) {
+      await deleteFromCloudinary(category.image);
+    }
+    const result = await uploadToCloudinary(req.file.path, 'categories');
+    imageUrl = result.secure_url;
+  }
+
+  category.name = name;
+  category.description = description;
+  category.type = type;
+  category.parent = parent || null;
+  category.image = imageUrl;
+
+  const updatedCategory = await category.save();
+  res.json(updatedCategory);
+});
+
 // @desc    Delete a category
-// @route   DELETE /api/mart/categories/:id
+// @route   DELETE /api/categories/:id
 // @access  Private/Admin
 const deleteCategory = asyncHandler(async (req, res) => {
   const category = await Category.findById(req.params.id);
 
-  if (category) {
-    // Check if there are any subcategories
-    const hasSubcategories = await Category.findOne({ parent: category._id });
-    if (hasSubcategories) {
-      res.status(400);
-      throw new Error('Cannot delete category with subcategories. Delete or reassign subcategories first.');
-    }
-    
-    await category.deleteOne();
-    res.json({ message: 'Category removed' });
-  } else {
+  if (!category) {
     res.status(404);
     throw new Error('Category not found');
   }
+
+  // Check if category has children
+  const hasChildren = await Category.exists({ parent: req.params.id });
+  if (hasChildren) {
+    res.status(400);
+    throw new Error('Cannot delete category with subcategories');
+  }
+
+  // Delete category image from cloudinary
+  if (category.image) {
+    await deleteFromCloudinary(category.image);
+  }
+
+  await category.deleteOne();
+  res.json({ message: 'Category removed' });
 });
 
 export {

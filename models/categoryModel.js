@@ -1,19 +1,20 @@
 import mongoose from 'mongoose';
 
-const categorySchema = new mongoose.Schema({
+const categorySchema = mongoose.Schema({
   name: {
     type: String,
     required: true,
-    trim: true,
-    unique: true
+    trim: true
   },
   description: {
     type: String,
-    required: true
+    trim: true
   },
-  image: {
+  type: {
     type: String,
-    default: 'default-category.jpg'
+    required: true,
+    enum: ['drug', 'mart'],
+    default: 'mart'
   },
   parent: {
     type: mongoose.Schema.Types.ObjectId,
@@ -30,6 +31,14 @@ const categorySchema = new mongoose.Schema({
   }
 }, {
   timestamps: true
+});
+
+// Prevent circular references
+categorySchema.pre('save', async function(next) {
+  if (this.parent && this.parent.toString() === this._id.toString()) {
+    throw new Error('Category cannot be its own parent');
+  }
+  next();
 });
 
 // Create index to enforce unique category names

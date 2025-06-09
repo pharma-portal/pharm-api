@@ -10,6 +10,9 @@ import orderRoutes from './routes/orderRoutes.js';
 import guestOrderRoutes from './routes/guestOrderRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
+import prescriptionRoutes from './routes/prescriptionRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 import scheduleStatusUpdates from './utils/orderStatusUpdater.js';
 
@@ -29,11 +32,19 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/drugs', drugRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/guest/orders', guestOrderRoutes);
+
+// Product routes (unified)
+app.use('/api/products', productRoutes);
 
 // Mart routes
 app.use('/api/mart/products', productRoutes);
-app.use('/api/mart/categories', categoryRoutes);
+app.use('/api/categories', categoryRoutes);
+
+// Analytics routes
+app.use('/api/analytics', analyticsRoutes);
 
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));

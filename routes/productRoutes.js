@@ -9,7 +9,7 @@ import {
   getTopProducts
 } from '../controllers/productController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
-import { uploadProductImage } from '../middleware/uploadMiddleware.js';
+import { uploadDrugImage } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
@@ -28,10 +28,10 @@ router.route('/:id/reviews')
 
 // Admin routes
 router.route('/')
-  .post(protect, admin, uploadProductImage, createProduct);
+  .post(protect, admin, uploadDrugImage, createProduct);
 
 router.route('/:id')
-  .put(protect, admin, uploadProductImage, updateProduct)
+  .put(protect, admin, uploadDrugImage, updateProduct)
   .delete(protect, admin, deleteProduct);
 
 export default router; 

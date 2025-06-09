@@ -1,6 +1,8 @@
 import multer from 'multer';
 import cloudinary from '../config/cloudinary.js';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import path from 'path';
+import fs from 'fs';
 
 // Configure Cloudinary storage for drug images
 const drugStorage = new CloudinaryStorage({
@@ -42,6 +44,42 @@ const categoryStorage = new CloudinaryStorage({
     }
 });
 
+// Create uploads directory if it doesn't exist
+const uploadDir = 'uploads';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configure storage
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+// File filter
+const fileFilter = (req, file, cb) => {
+  // Accept images and PDFs
+  if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+    cb(null, true);
+  } else {
+    cb(new Error('Only images and PDFs are allowed!'), false);
+  }
+};
+
+// Configure multer
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+
 // Multer upload configuration for drug images
 const uploadDrugImage = multer({
     storage: drugStorage,
@@ -57,11 +95,26 @@ const uploadDrugImage = multer({
     }
 }).single('image');
 
-// Multer upload configuration for prescriptions
-const uploadPrescription = multer({
+// Middleware for category image upload
+export const uploadCategoryImage = multer({
+    storage: categoryStorage,
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Please upload an image file.'), false);
+        }
+    }
+}).single('image');
+
+// Middleware for prescription upload
+export const uploadPrescription = multer({
     storage: prescriptionStorage,
     limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB limit
+        fileSize: 10 * 1024 * 1024 // 10MB limit for prescriptions
     },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
@@ -72,39 +125,23 @@ const uploadPrescription = multer({
     }
 }).single('prescriptionFile');
 
-// Multer upload configuration for mart product images
-const uploadProductImage = multer({
+// Middleware for product images upload
+export const uploadProductImages = multer({
     storage: productStorage,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB limit
+        fileSize: 5 * 1024 * 1024
     },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) {
             cb(null, true);
         } else {
-            cb(new Error('Not an image! Please upload only images.'), false);
+            cb(new Error('Please upload an image file.'), false);
         }
     }
-}).single('image');
-
-// Multer upload configuration for mart category images
-const uploadCategoryImage = multer({
-    storage: categoryStorage,
-    limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB limit
-    },
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Not an image! Please upload only images.'), false);
-        }
-    }
-}).single('image');
+}).array('images', 5); // Max 5 images per product
 
 export { 
-    uploadDrugImage, 
-    uploadPrescription,
-    uploadProductImage,
-    uploadCategoryImage
+    uploadDrugImage
 }; 
+
+export default upload; 
