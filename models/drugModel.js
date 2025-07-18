@@ -57,6 +57,11 @@ const drugSchema = new mongoose.Schema({
     min: 0,
     default: 0
   },
+  status: {
+    type: String,
+    enum: ['available', 'out_of_stock', 'low_stock'],
+    default: 'out_of_stock'
+  },
   dosageForm: {
     type: String,
     required: true,
@@ -89,6 +94,16 @@ drugSchema.pre('save', function(next) {
     this.rating = this.reviews.reduce((acc, review) => review.rating + acc, 0) / this.reviews.length;
     this.numReviews = this.reviews.length;
   }
+  
+  // Update status based on inStock quantity
+  if (this.inStock > 10) {
+    this.status = 'available';
+  } else if (this.inStock > 0) {
+    this.status = 'low_stock';
+  } else {
+    this.status = 'out_of_stock';
+  }
+  
   next();
 });
 

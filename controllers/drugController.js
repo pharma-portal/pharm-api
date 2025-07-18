@@ -46,6 +46,11 @@ const getDrugs = asyncHandler(async (req, res) => {
     filter.inStock = { $gt: 0 };
   }
 
+  // Filter by status
+  if (req.query.status) {
+    filter.status = req.query.status;
+  }
+
   // Filter by dosage form
   if (req.query.dosageForm) {
     filter.dosageForm = req.query.dosageForm;
@@ -90,6 +95,7 @@ const getDrugs = asyncHandler(async (req, res) => {
   const categories = await Drug.distinct('category');
   const brands = await Drug.distinct('brand');
   const dosageForms = await Drug.distinct('dosageForm');
+  const statuses = ['available', 'low_stock', 'out_of_stock'];
 
   res.json({
     drugs,
@@ -99,7 +105,8 @@ const getDrugs = asyncHandler(async (req, res) => {
     filters: {
       categories,
       brands,
-      dosageForms
+      dosageForms,
+      statuses
     }
   });
 });
@@ -131,7 +138,7 @@ const createDrug = asyncHandler(async (req, res) => {
     inStock: req.body.inStock,
     dosageForm: req.body.dosageForm,
     strength: req.body.strength,
-    image: req.file ? req.file.path : 'https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/v1/pharmacy/drugs/default-drug.jpg'
+    image: req.file ? req.file.path : '/uploads/default-drug.jpg'
   });
 
   const createdDrug = await drug.save();

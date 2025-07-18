@@ -25,7 +25,7 @@ const addPrescriptionDrug = async () => {
       inStock: 100,
       dosageForm: 'tablet',
       strength: '500mg',
-      image: 'https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/v1/pharmacy/drugs/default-drug.jpg'
+      image: '/uploads/default-drug.jpg'
     });
 
     await prescriptionDrug.save();
