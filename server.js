@@ -26,6 +26,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
+// API CONFIRMATION
+app.get('/', (req, res) => {
+  res.send('API is working 🚀');
+});
+
 // Pharmacy routes
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
