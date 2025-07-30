@@ -27,7 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 // API CONFIRMATION
-app.get('/', (req, res) => {
+app.use('/', (req, res) => {
   res.send('API is working 🚀');
 });
 
