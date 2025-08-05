@@ -26,11 +26,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
-// API CONFIRMATION
-app.use('/', (req, res) => {
-  res.send('API is working 🚀');
-});
-
 // Pharmacy routes
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
@@ -61,7 +56,7 @@ app.use(errorHandler);
 // Start automated order status updates
 scheduleStatusUpdates();
 
-const PORT = process.env.PORT || 5600;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 }); 
