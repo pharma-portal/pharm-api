@@ -71,6 +71,14 @@ const orderSchema = new mongoose.Schema({
     update_time: { type: String },
     email_address: { type: String }
   },
+  hubtelTransactionId: {
+    type: String
+  },
+  hubtelStatus: {
+    type: String,
+    enum: ['pending', 'success', 'failed', 'cancelled'],
+    default: 'pending'
+  },
   totalPrice: {
     type: Number,
     required: true,

@@ -267,9 +267,98 @@ prescription: [file] (required for prescription drugs)
     "totalPrice": 199.98,
     "status": "pending",
     "isPaid": false,
-    "isDelivered": false
+    "isDelivered": false,
+    "hubtelTransactionId": "hubtel_transaction_id",
+    "hubtelStatus": "pending"
   }
 ]
+```
+
+### Check Hubtel Transaction Status
+- **URL**: `/orders/:id/hubtel-status`
+- **Method**: `GET`
+- **Access**: Private
+- **Success Response**: `200 OK`
+```json
+{
+  "order": {
+    "_id": "order_id",
+    "hubtelTransactionId": "hubtel_transaction_id",
+    "hubtelStatus": "success",
+    "isPaid": true,
+    "paidAt": "2024-01-01T00:00:00.000Z",
+    "paymentResult": {
+      "id": "hubtel_transaction_id",
+      "status": "SUCCESS",
+      "update_time": "2024-01-01T00:00:00.000Z",
+      "email_address": "user@example.com"
+    }
+  },
+  "hubtelStatus": "success",
+  "hubtelResponse": {
+    "status": "SUCCESS",
+    "transactionId": "hubtel_transaction_id",
+    "amount": 199.98,
+    "currency": "GHS"
+  }
+}
+```
+
+### Update Order with Hubtel Transaction ID
+- **URL**: `/orders/:id/hubtel-transaction`
+- **Method**: `PUT`
+- **Access**: Private
+- **Request Body**:
+```json
+{
+  "transactionId": "hubtel_transaction_id"
+}
+```
+- **Success Response**: `200 OK`
+```json
+{
+  "order": {
+    "_id": "order_id",
+    "hubtelTransactionId": "hubtel_transaction_id",
+    "hubtelStatus": "success",
+    "isPaid": true
+  },
+  "hubtelStatus": "success",
+  "hubtelResponse": {
+    "status": "SUCCESS",
+    "transactionId": "hubtel_transaction_id",
+    "amount": 199.98,
+    "currency": "GHS"
+  }
+}
+```
+
+### Get All Orders with Hubtel Status (Admin Only)
+- **URL**: `/orders/hubtel/all`
+- **Method**: `GET`
+- **Access**: Private/Admin
+- **Query Parameters**:
+  - `page`: Page number (default: 1)
+  - `limit`: Items per page (default: 10)
+- **Success Response**: `200 OK`
+```json
+{
+  "orders": [
+    {
+      "_id": "order_id",
+      "hubtelTransactionId": "hubtel_transaction_id",
+      "hubtelStatus": "success",
+      "user": {
+        "_id": "user_id",
+        "name": "John Doe",
+        "email": "john@example.com"
+      }
+    }
+  ],
+  "page": 1,
+  "pages": 5,
+  "total": 50
+}
 ```
 
 ## Testing with Postman

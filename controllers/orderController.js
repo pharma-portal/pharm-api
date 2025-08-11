@@ -3,6 +3,7 @@ import Order from '../models/orderModel.js';
 import Cart from '../models/cartModel.js';
 import Drug from '../models/drugModel.js';
 import Product from '../models/productModel.js';
+import hubtelService from '../utils/hubtelService.js';
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -305,6 +306,154 @@ const getPrescriptionDetails = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Check Hubtel transaction status
+// @route   GET /api/orders/:id/hubtel-status
+// @access  Private
+const checkHubtelStatus = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    res.status(404);
+    throw new Error('Order not found');
+  }
+
+  // Check if the order belongs to the user or if user is admin
+  if (order.user.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+    res.status(401);
+    throw new Error('Not authorized');
+  }
+
+  // Check if order has a Hubtel transaction ID
+  if (!order.hubtelTransactionId) {
+    res.status(400);
+    throw new Error('No Hubtel transaction ID found for this order');
+  }
+
+  // Get optional parameters from query string
+  const { clientReference, networkTransactionId } = req.query;
+
+  try {
+    const result = await hubtelService.updateOrderWithHubtelStatus(
+      order, 
+      order.hubtelTransactionId,
+      clientReference,
+      networkTransactionId
+    );
+    
+    res.json({
+      order: result.order,
+      hubtelStatus: result.mappedStatus,
+      hubtelResponse: result.hubtelResponse
+    });
+  } catch (error) {
+    res.status(500);
+    throw new Error(`Failed to check Hubtel status: ${error.message}`);
+  }
+});
+
+// @desc    Update order with Hubtel transaction ID
+// @route   PUT /api/orders/:id/hubtel-transaction
+// @access  Private
+const updateHubtelTransaction = asyncHandler(async (req, res) => {
+  const { transactionId, clientReference, networkTransactionId } = req.body;
+
+  if (!transactionId) {
+    res.status(400);
+    throw new Error('Transaction ID is required');
+  }
+
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    res.status(404);
+    throw new Error('Order not found');
+  }
+
+  // Check if the order belongs to the user or if user is admin
+  if (order.user.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+    res.status(401);
+    throw new Error('Not authorized');
+  }
+
+  // Update order with Hubtel transaction ID
+  order.hubtelTransactionId = transactionId;
+  if (clientReference) order.hubtelClientReference = clientReference;
+  if (networkTransactionId) order.hubtelNetworkTransactionId = networkTransactionId;
+  await order.save();
+
+  // Check Hubtel status immediately
+  try {
+    const result = await hubtelService.updateOrderWithHubtelStatus(
+      order, 
+      transactionId,
+      clientReference,
+      networkTransactionId
+    );
+    
+    res.json({
+      order: result.order,
+      hubtelStatus: result.mappedStatus,
+      hubtelResponse: result.hubtelResponse
+    });
+  } catch (error) {
+    // If status check fails, still save the transaction ID but return error
+    res.status(500);
+    throw new Error(`Transaction ID saved but status check failed: ${error.message}`);
+  }
+});
+
+// @desc    Get all orders with Hubtel status
+// @route   GET /api/orders/hubtel/all
+// @access  Private/Admin
+const getOrdersWithHubtelStatus = asyncHandler(async (req, res) => {
+  const pageSize = Number(req.query.limit) || 10;
+  const page = Number(req.query.page) || 1;
+
+  const count = await Order.countDocuments({ hubtelTransactionId: { $exists: true, $ne: null } });
+  const orders = await Order.find({ hubtelTransactionId: { $exists: true, $ne: null } })
+    .populate('user', 'name email')
+    .sort('-createdAt')
+    .limit(pageSize)
+    .skip(pageSize * (page - 1));
+
+  res.json({
+    orders,
+    page,
+    pages: Math.ceil(count / pageSize),
+    total: count
+  });
+});
+
+// @desc    Check Hubtel transaction status with new API format
+// @route   GET /api/orders/hubtel/status/:transactionId
+// @access  Private
+const checkHubtelTransactionStatus = asyncHandler(async (req, res) => {
+  const { transactionId } = req.params;
+  const { clientReference, networkTransactionId } = req.query;
+
+  if (!transactionId) {
+    res.status(400);
+    throw new Error('Transaction ID is required');
+  }
+
+  try {
+    const hubtelResponse = await hubtelService.checkTransactionStatus(
+      transactionId,
+      clientReference,
+      networkTransactionId
+    );
+    
+    res.json({
+      transactionId,
+      hubtelResponse,
+      mappedStatus: hubtelService.mapHubtelStatus(hubtelResponse.status)
+    });
+  } catch (error) {
+    res.status(500);
+    throw new Error(`Failed to check Hubtel transaction status: ${error.message}`);
+  }
+});
+
 export {
   createOrder,
   getOrderById,
@@ -314,5 +463,9 @@ export {
   getMyOrders,
   getOrders,
   cancelOrder,
-  getPrescriptionDetails
+  getPrescriptionDetails,
+  checkHubtelStatus,
+  updateHubtelTransaction,
+  getOrdersWithHubtelStatus,
+  checkHubtelTransactionStatus
 }; 

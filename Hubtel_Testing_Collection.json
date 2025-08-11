@@ -1,0 +1,157 @@
+{
+  "info": {
+    "name": "Hubtel Integration Testing",
+    "description": "Collection for testing Hubtel Transaction Status Check API integration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "your_order_id_here",
+      "type": "string"
+    },
+    {
+      "key": "transactionId",
+      "value": "your_hubtel_transaction_id_here",
+      "type": "string"
+    },
+    {
+      "key": "clientReference",
+      "value": "TEST_REF_123",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Get Available Orders",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/orders/myorders",
+          "host": ["{{baseUrl}}"],
+          "path": ["orders", "myorders"]
+        }
+      }
+    },
+    {
+      "name": "Check Order Hubtel Status",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/orders/{{orderId}}/hubtel-status?clientReference={{clientReference}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["orders", "{{orderId}}", "hubtel-status"],
+          "query": [
+            {
+              "key": "clientReference",
+              "value": "{{clientReference}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Order with Hubtel Transaction",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"clientReference\": \"{{clientReference}}\",\n  \"networkTransactionId\": \"NETWORK_TXN_456\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/orders/{{orderId}}/hubtel-transaction",
+          "host": ["{{baseUrl}}"],
+          "path": ["orders", "{{orderId}}", "hubtel-transaction"]
+        }
+      }
+    },
+    {
+      "name": "Direct Transaction Status Check",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/orders/hubtel/status/{{transactionId}}?clientReference={{clientReference}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["orders", "hubtel", "status", "{{transactionId}}"],
+          "query": [
+            {
+              "key": "clientReference",
+              "value": "{{clientReference}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get All Orders with Hubtel Status (Admin)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/orders/hubtel/all?page=1&limit=5",
+          "host": ["{{baseUrl}}"],
+          "path": ["orders", "hubtel", "all"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "5"
+            }
+          ]
+        }
+      }
+    }
+  ]
+} 
