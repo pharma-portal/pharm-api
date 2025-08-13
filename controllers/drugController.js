@@ -138,6 +138,12 @@ const createDrug = asyncHandler(async (req, res) => {
     inStock: req.body.inStock,
     dosageForm: req.body.dosageForm,
     strength: req.body.strength,
+    ingredients: req.body.ingredients,
+    dosage: req.body.dosage,
+    directionsForUse: req.body.directionsForUse,
+    suitableFor: req.body.suitableFor,
+    caution: req.body.caution,
+    storage: req.body.storage,
     image: req.file ? req.file.path : '/uploads/default-drug.jpg'
   });
 
@@ -161,6 +167,12 @@ const updateDrug = asyncHandler(async (req, res) => {
     drug.inStock = req.body.inStock ?? drug.inStock;
     drug.dosageForm = req.body.dosageForm || drug.dosageForm;
     drug.strength = req.body.strength || drug.strength;
+    drug.ingredients = req.body.ingredients || drug.ingredients;
+    drug.dosage = req.body.dosage || drug.dosage;
+    drug.directionsForUse = req.body.directionsForUse || drug.directionsForUse;
+    drug.suitableFor = req.body.suitableFor || drug.suitableFor;
+    drug.caution = req.body.caution || drug.caution;
+    drug.storage = req.body.storage || drug.storage;
     
     if (req.file) {
       drug.image = req.file.path;
@@ -251,6 +263,51 @@ const getDrugsByBrand = asyncHandler(async (req, res) => {
   res.json(drugs);
 });
 
+// @desc    Get all available drug categories
+// @route   GET /api/drugs/categories
+// @access  Public
+const getDrugCategories = asyncHandler(async (req, res) => {
+  const categories = Drug.getCategories();
+  const mainCategories = Drug.getMainCategories();
+  
+  // Structure for frontend dropdowns
+  const dropdownData = mainCategories.map(mainCat => ({
+    value: mainCat,
+    label: mainCat,
+    subcategories: Drug.getSubcategories(mainCat).map(subCat => ({
+      value: subCat,
+      label: subCat
+    }))
+  }));
+
+  res.json({
+    allCategories: categories,
+    mainCategories: mainCategories,
+    dropdownData: dropdownData
+  });
+});
+
+// @desc    Get subcategories for a specific main category
+// @route   GET /api/drugs/categories/:mainCategory/subcategories
+// @access  Public
+const getDrugSubcategories = asyncHandler(async (req, res) => {
+  const { mainCategory } = req.params;
+  const subcategories = Drug.getSubcategories(mainCategory);
+  
+  if (subcategories.length === 0) {
+    res.status(404);
+    throw new Error('Main category not found or has no subcategories');
+  }
+  
+  res.json({
+    mainCategory,
+    subcategories: subcategories.map(subCat => ({
+      value: subCat,
+      label: subCat
+    }))
+  });
+});
+
 export {
   getDrugs,
   getDrugById,
@@ -259,5 +316,7 @@ export {
   deleteDrug,
   createDrugReview,
   getDrugsByCategory,
-  getDrugsByBrand
+  getDrugsByBrand,
+  getDrugCategories,
+  getDrugSubcategories
 }; 

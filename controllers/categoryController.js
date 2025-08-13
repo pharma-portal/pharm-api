@@ -114,6 +114,7 @@ const updateCategory = asyncHandler(async (req, res) => {
     throw new Error('Category already exists');
   }
 
+  // Handle image upload
   let imageUrl = category.image;
   if (req.file) {
     if (category.image) {
@@ -144,13 +145,6 @@ const deleteCategory = asyncHandler(async (req, res) => {
     throw new Error('Category not found');
   }
 
-  // Check if category has children
-  const hasChildren = await Category.exists({ parent: req.params.id });
-  if (hasChildren) {
-    res.status(400);
-    throw new Error('Cannot delete category with subcategories');
-  }
-
   // Delete category image from cloudinary
   if (category.image) {
     await deleteFromCloudinary(category.image);
@@ -160,11 +154,103 @@ const deleteCategory = asyncHandler(async (req, res) => {
   res.json({ message: 'Category removed' });
 });
 
+// @desc    Get categories for frontend dropdowns
+// @route   GET /api/categories/dropdown
+// @access  Public
+const getCategoriesForDropdown = asyncHandler(async (req, res) => {
+  const { type } = req.query;
+  const query = type ? { type } : {};
+
+  const categories = await Category.find(query)
+    .populate('parent', 'name')
+    .sort({ displayOrder: 1, name: 1 });
+
+  // Structure for frontend dropdowns
+  const dropdownData = categories
+    .filter(cat => !cat.parent) // Only main categories
+    .map(mainCat => ({
+      value: mainCat._id,
+      label: mainCat.name,
+      description: mainCat.description,
+      type: mainCat.type,
+      subcategories: categories
+        .filter(subCat => subCat.parent && subCat.parent._id.toString() === mainCat._id.toString())
+        .map(subCat => ({
+          value: subCat._id,
+          label: subCat.name,
+          description: subCat.description
+        }))
+    }));
+
+  res.json(dropdownData);
+});
+
+// @desc    Get flat list of categories for simple dropdowns
+// @route   GET /api/categories/flat
+// @access  Public
+const getFlatCategories = asyncHandler(async (req, res) => {
+  const { type } = req.query;
+  const query = type ? { type } : {};
+
+  const categories = await Category.find(query)
+    .populate('parent', 'name')
+    .sort({ displayOrder: 1, name: 1 });
+
+  // Flat structure for simple dropdowns
+  const flatData = categories.map(cat => ({
+    value: cat._id,
+    label: cat.parent ? `${cat.parent.name} > ${cat.name}` : cat.name,
+    description: cat.description,
+    type: cat.type,
+    isSubcategory: !!cat.parent,
+    parentName: cat.parent?.name || null
+  }));
+
+  res.json(flatData);
+});
+
+// @desc    Get categories by type for frontend
+// @route   GET /api/categories/type/:type
+// @access  Public
+const getCategoriesByType = asyncHandler(async (req, res) => {
+  const { type } = req.params;
+  
+  if (!['drug', 'mart'].includes(type)) {
+    res.status(400);
+    throw new Error('Invalid category type. Must be "drug" or "mart"');
+  }
+
+  const categories = await Category.find({ type })
+    .populate('parent', 'name')
+    .sort({ displayOrder: 1, name: 1 });
+
+  // Group by main categories and subcategories
+  const mainCategories = categories.filter(cat => !cat.parent);
+  const subcategories = categories.filter(cat => cat.parent);
+
+  const structuredData = mainCategories.map(mainCat => ({
+    ...mainCat.toObject(),
+    subcategories: subcategories
+      .filter(subCat => subCat.parent._id.toString() === mainCat._id.toString())
+      .map(subCat => ({
+        _id: subCat._id,
+        name: subCat.name,
+        description: subCat.description,
+        displayOrder: subCat.displayOrder
+      }))
+  }));
+
+  res.json(structuredData);
+});
+
 export {
   getCategories,
   getCategoryTree,
   getCategoryById,
   createCategory,
   updateCategory,
-  deleteCategory
+  deleteCategory,
+  getCategoriesForDropdown,
+  getFlatCategories,
+  getCategoriesByType
 }; 

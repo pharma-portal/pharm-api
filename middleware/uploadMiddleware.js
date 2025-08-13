@@ -140,6 +140,21 @@ export const uploadProductImages = multer({
     }
 }).array('images', 5); // Max 5 images per product
 
+// Middleware for single product image upload
+export const uploadProductImage = multer({
+    storage: productStorage,
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Please upload an image file.'), false);
+        }
+    }
+}).single('image');
+
 export { 
     uploadDrugImage
 }; 

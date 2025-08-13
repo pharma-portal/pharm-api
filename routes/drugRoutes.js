@@ -7,7 +7,9 @@ import {
   deleteDrug,
   createDrugReview,
   getDrugsByCategory,
-  getDrugsByBrand
+  getDrugsByBrand,
+  getDrugCategories,
+  getDrugSubcategories
 } from '../controllers/drugController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import { uploadDrugImage } from '../middleware/uploadMiddleware.js';
@@ -17,6 +19,10 @@ const router = express.Router();
 router.route('/')
   .get(getDrugs)
   .post(protect, admin, uploadDrugImage, createDrug);
+
+// Category routes for frontend dropdowns - MUST come before /:id route
+router.get('/categories', getDrugCategories);
+router.get('/categories/:mainCategory/subcategories', getDrugSubcategories);
 
 router.route('/:id')
   .get(getDrugById)

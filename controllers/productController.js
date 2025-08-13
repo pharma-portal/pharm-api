@@ -81,7 +81,11 @@ const createProduct = asyncHandler(async (req, res) => {
     discountPercentage,
     weight,
     dimensions,
-    barcode
+    barcode,
+    suitableFor,
+    caution,
+    howToUse,
+    specifications
   } = req.body;
 
   const product = new Product({
@@ -91,12 +95,16 @@ const createProduct = asyncHandler(async (req, res) => {
     category,
     price,
     countInStock,
-    image: image || 'default-product.jpg',
+    image: req.file ? req.file.path : (image || 'default-product.jpg'),
     featured: featured || false,
     discountPercentage: discountPercentage || 0,
     weight,
     dimensions,
     barcode,
+    suitableFor,
+    caution,
+    howToUse,
+    specifications,
     rating: 0,
     numReviews: 0
   });
@@ -121,7 +129,11 @@ const updateProduct = asyncHandler(async (req, res) => {
     discountPercentage,
     weight,
     dimensions,
-    barcode
+    barcode,
+    suitableFor,
+    caution,
+    howToUse,
+    specifications
   } = req.body;
 
   const product = await Product.findById(req.params.id);
@@ -133,12 +145,22 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.category = category || product.category;
     product.price = price || product.price;
     product.countInStock = countInStock || product.countInStock;
-    product.image = image || product.image;
+    
+    if (req.file) {
+      product.image = req.file.path;
+    } else if (image) {
+      product.image = image;
+    }
+    
     product.featured = featured !== undefined ? featured : product.featured;
     product.discountPercentage = discountPercentage !== undefined ? discountPercentage : product.discountPercentage;
     product.weight = weight || product.weight;
     product.dimensions = dimensions || product.dimensions;
     product.barcode = barcode || product.barcode;
+    product.suitableFor = suitableFor || product.suitableFor;
+    product.caution = caution || product.caution;
+    product.howToUse = howToUse || product.howToUse;
+    product.specifications = specifications || product.specifications;
 
     const updatedProduct = await product.save();
     res.json(updatedProduct);
@@ -215,6 +237,51 @@ const getTopProducts = asyncHandler(async (req, res) => {
   res.json(products);
 });
 
+// @desc    Get all available product categories
+// @route   GET /api/mart/products/categories
+// @access  Public
+const getProductCategories = asyncHandler(async (req, res) => {
+  const categories = Product.getCategories();
+  const mainCategories = Product.getMainCategories();
+  
+  // Structure for frontend dropdowns
+  const dropdownData = mainCategories.map(mainCat => ({
+    value: mainCat,
+    label: mainCat,
+    subcategories: Product.getSubcategories(mainCat).map(subCat => ({
+      value: subCat,
+      label: subCat
+    }))
+  }));
+
+  res.json({
+    allCategories: categories,
+    mainCategories: mainCategories,
+    dropdownData: dropdownData
+  });
+});
+
+// @desc    Get subcategories for a specific main category
+// @route   GET /api/mart/products/categories/:mainCategory/subcategories
+// @access  Public
+const getProductSubcategories = asyncHandler(async (req, res) => {
+  const { mainCategory } = req.params;
+  const subcategories = Product.getSubcategories(mainCategory);
+  
+  if (subcategories.length === 0) {
+    res.status(404);
+    throw new Error('Main category not found or has no subcategories');
+  }
+  
+  res.json({
+    mainCategory,
+    subcategories: subcategories.map(subCat => ({
+      value: subCat,
+      label: subCat
+    }))
+  });
+});
+
 export {
   getProducts,
   getProductById,
@@ -223,4 +290,6 @@ export {
   deleteProduct,
   createProductReview,
   getTopProducts,
+  getProductCategories,
+  getProductSubcategories
 }; 

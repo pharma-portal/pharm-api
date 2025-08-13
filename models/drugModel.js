@@ -45,7 +45,73 @@ const drugSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    required: [true, 'Please enter drug category']
+    required: [true, 'Please enter drug category'],
+    enum: [
+      // Main Drug Categories
+      'Antibiotics',
+      'Pain Relief',
+      'Cardiovascular',
+      'Respiratory',
+      'Mental Health',
+      'Diabetes',
+      'Vitamins & Supplements',
+      'Gastrointestinal',
+      'Over the counter(OTC)',
+      'Prescription only medicine(POM)',
+      'Uncategorized',
+      // Antibiotic Subcategories
+      'Penicillins',
+      'Cephalosporins',
+      'Macrolides',
+      'Tetracyclines',
+      'Fluoroquinolones',
+      'Aminoglycosides',
+      // Pain Relief Subcategories
+      'NSAIDs',
+      'Opioids',
+      'Acetaminophen',
+      'Muscle Relaxants',
+      'Topical Pain Relief',
+      // Cardiovascular Subcategories
+      'ACE Inhibitors',
+      'Beta Blockers',
+      'Calcium Channel Blockers',
+      'Diuretics',
+      'Statins',
+      'Anticoagulants',
+      // Respiratory Subcategories
+      'Bronchodilators',
+      'Inhaled Corticosteroids',
+      'Expectorants',
+      'Decongestants',
+      'Antihistamines',
+      // Mental Health Subcategories
+      'Antidepressants',
+      'Antianxiety',
+      'Antipsychotics',
+      'Mood Stabilizers',
+      'ADHD Medications',
+      // Diabetes Subcategories
+      'Insulin',
+      'Oral Medications',
+      'GLP-1 Agonists',
+      'DPP-4 Inhibitors',
+      'SGLT2 Inhibitors',
+      // Vitamins & Supplements Subcategories
+      'Multivitamins',
+      'Vitamin D',
+      'Vitamin C',
+      'B Vitamins',
+      'Minerals',
+      'Omega-3',
+      // Gastrointestinal Subcategories
+      'Antacids',
+      'Proton Pump Inhibitors',
+      'Antiemetics',
+      'Laxatives',
+      'Antidiarrheals',
+      'Probiotics'
+    ]
   },
   requiresPrescription: {
     type: Boolean,
@@ -71,6 +137,30 @@ const drugSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  ingredients: {
+    type: String,
+    required: [true, 'Please enter drug ingredients/composition']
+  },
+  dosage: {
+    type: String,
+    required: [true, 'Please enter dosage information']
+  },
+  directionsForUse: {
+    type: String,
+    required: [true, 'Please enter directions for use']
+  },
+  suitableFor: {
+    type: String,
+    required: [true, 'Please enter suitable age groups/conditions']
+  },
+  caution: {
+    type: String,
+    required: [true, 'Please enter caution/warning information']
+  },
+  storage: {
+    type: String,
+    required: [true, 'Please enter storage instructions']
+  },
   reviews: [reviewSchema],
   rating: {
     type: Number,
@@ -94,7 +184,7 @@ drugSchema.pre('save', function(next) {
     this.rating = this.reviews.reduce((acc, review) => review.rating + acc, 0) / this.reviews.length;
     this.numReviews = this.reviews.length;
   }
-  
+
   // Update status based on inStock quantity
   if (this.inStock > 10) {
     this.status = 'available';
@@ -103,9 +193,47 @@ drugSchema.pre('save', function(next) {
   } else {
     this.status = 'out_of_stock';
   }
-  
+
   next();
 });
+
+// Static method to get all available categories
+drugSchema.statics.getCategories = function() {
+  return this.schema.path('category').enumValues;
+};
+
+// Static method to get main categories only
+drugSchema.statics.getMainCategories = function() {
+  return [
+    'Antibiotics',
+    'Pain Relief',
+    'Cardiovascular',
+    'Respiratory',
+    'Mental Health',
+    'Diabetes',
+    'Vitamins & Supplements',
+    'Gastrointestinal',
+    'Over the counter(OTC)',
+    'Prescription only medicine(POM)',
+    'Uncategorized'
+  ];
+};
+
+// Static method to get subcategories for a main category
+drugSchema.statics.getSubcategories = function(mainCategory) {
+  const subcategoryMap = {
+    'Antibiotics': ['Penicillins', 'Cephalosporins', 'Macrolides', 'Tetracyclines', 'Fluoroquinolones', 'Aminoglycosides'],
+    'Pain Relief': ['NSAIDs', 'Opioids', 'Acetaminophen', 'Muscle Relaxants', 'Topical Pain Relief'],
+    'Cardiovascular': ['ACE Inhibitors', 'Beta Blockers', 'Calcium Channel Blockers', 'Diuretics', 'Statins', 'Anticoagulants'],
+    'Respiratory': ['Bronchodilators', 'Inhaled Corticosteroids', 'Expectorants', 'Decongestants', 'Antihistamines'],
+    'Mental Health': ['Antidepressants', 'Antianxiety', 'Antipsychotics', 'Mood Stabilizers', 'ADHD Medications'],
+    'Diabetes': ['Insulin', 'Oral Medications', 'GLP-1 Agonists', 'DPP-4 Inhibitors', 'SGLT2 Inhibitors'],
+    'Vitamins & Supplements': ['Multivitamins', 'Vitamin D', 'Vitamin C', 'B Vitamins', 'Minerals', 'Omega-3'],
+    'Gastrointestinal': ['Antacids', 'Proton Pump Inhibitors', 'Antiemetics', 'Laxatives', 'Antidiarrheals', 'Probiotics']
+  };
+  
+  return subcategoryMap[mainCategory] || [];
+};
 
 const Drug = mongoose.model('Drug', drugSchema);
 export default Drug; 

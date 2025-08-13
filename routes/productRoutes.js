@@ -6,10 +6,12 @@ import {
   updateProduct,
   deleteProduct,
   createProductReview,
-  getTopProducts
+  getTopProducts,
+  getProductCategories,
+  getProductSubcategories
 } from '../controllers/productController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
-import { uploadDrugImage } from '../middleware/uploadMiddleware.js';
+import { uploadProductImage } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
@@ -18,6 +20,10 @@ router.route('/')
   .get(getProducts);
 
 router.get('/top', getTopProducts);
+
+// Category routes for frontend dropdowns
+router.get('/categories', getProductCategories);
+router.get('/categories/:mainCategory/subcategories', getProductSubcategories);
 
 router.route('/:id')
   .get(getProductById);
@@ -28,10 +34,10 @@ router.route('/:id/reviews')
 
 // Admin routes
 router.route('/')
-  .post(protect, admin, uploadDrugImage, createProduct);
+  .post(protect, admin, uploadProductImage, createProduct);
 
 router.route('/:id')
-  .put(protect, admin, uploadDrugImage, updateProduct)
+  .put(protect, admin, uploadProductImage, updateProduct)
   .delete(protect, admin, deleteProduct);
 
 export default router; 
