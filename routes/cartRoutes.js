@@ -17,8 +17,11 @@ router.route('/')
   .get(optionalAuth, getCart)
   .delete(optionalAuth, clearCart);
 
-// Add pharmacy drug to cart
-router.post('/drug', optionalAuth, uploadPrescription, addDrugToCart);
+// Add pharmacy drug to cart (without prescription - for non-prescription drugs)
+router.post('/drug', optionalAuth, addDrugToCart);
+
+// Add pharmacy drug to cart (with prescription - for prescription drugs)
+router.post('/drug/prescription', optionalAuth, uploadPrescription, addDrugToCart);
 
 // Add mart product to cart
 router.post('/product', optionalAuth, addProductToCart);

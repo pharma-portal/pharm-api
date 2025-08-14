@@ -26,6 +26,7 @@ const getCart = asyncHandler(async (req, res) => {
 
 // @desc    Add drug to cart (pharmacy)
 // @route   POST /api/cart/drug
+// @route   POST /api/cart/drug/prescription
 // @access  Public/Private
 const addDrugToCart = asyncHandler(async (req, res) => {
   const { drugId, quantity } = req.body;
@@ -43,10 +44,25 @@ const addDrugToCart = asyncHandler(async (req, res) => {
       res.status(401);
       throw new Error('Please login to purchase prescription drugs');
     }
+    
+    // Check if this is the prescription endpoint
+    const isPrescriptionEndpoint = req.originalUrl.includes('/prescription');
+    
+    if (!isPrescriptionEndpoint) {
+      res.status(400);
+      throw new Error('This drug requires a prescription. Please use the prescription endpoint: /api/cart/drug/prescription');
+    }
+    
     // Check for prescription file
     if (!req.file) {
       res.status(400);
       throw new Error('Prescription required for this drug');
+    }
+  } else {
+    // For non-prescription drugs, ensure no prescription file is uploaded
+    if (req.file) {
+      res.status(400);
+      throw new Error('Prescription file not needed for non-prescription drugs');
     }
   }
 

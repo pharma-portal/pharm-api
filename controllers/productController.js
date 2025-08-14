@@ -5,8 +5,16 @@ import Product from '../models/productModel.js';
 // @route   GET /api/mart/products
 // @access  Public
 const getProducts = asyncHandler(async (req, res) => {
-  const pageSize = 10;
-  const page = Number(req.query.page) || 1;
+  // Check if pagination is requested
+  const usePagination = req.query.page || req.query.pageSize;
+  
+  let pageSize = 10;
+  let page = 1;
+  
+  if (usePagination) {
+    pageSize = Number(req.query.pageSize) || 10;
+    page = Number(req.query.page) || 1;
+  }
   
   const keyword = req.query.keyword
     ? {
@@ -38,16 +46,45 @@ const getProducts = asyncHandler(async (req, res) => {
   };
 
   const count = await Product.countDocuments(filterQuery);
-  const products = await Product.find(filterQuery)
-    .limit(pageSize)
-    .skip(pageSize * (page - 1))
+  
+  let products;
+  if (usePagination) {
+    // Use pagination
+    products = await Product.find(filterQuery)
+      .limit(pageSize)
+      .skip(pageSize * (page - 1))
+      .sort({ createdAt: -1 });
+  } else {
+    // Return all products
+    products = await Product.find(filterQuery)
+      .sort({ createdAt: -1 });
+  }
+
+  if (usePagination) {
+    res.json({
+      products,
+      page,
+      pages: Math.ceil(count / pageSize),
+      total: count
+    });
+  } else {
+    res.json({
+      products,
+      total: count
+    });
+  }
+});
+
+// @desc    Get all products (no pagination)
+// @route   GET /api/mart/products/all
+// @access  Public
+const getAllProducts = asyncHandler(async (req, res) => {
+  const products = await Product.find({})
     .sort({ createdAt: -1 });
 
   res.json({
     products,
-    page,
-    pages: Math.ceil(count / pageSize),
-    total: count
+    total: products.length
   });
 });
 
@@ -284,6 +321,7 @@ const getProductSubcategories = asyncHandler(async (req, res) => {
 
 export {
   getProducts,
+  getAllProducts,
   getProductById,
   createProduct,
   updateProduct,

@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   getProducts,
+  getAllProducts,
   getProductById,
   createProduct,
   updateProduct,
@@ -16,9 +17,8 @@ import { uploadProductImage } from '../middleware/uploadMiddleware.js';
 const router = express.Router();
 
 // Public routes
-router.route('/')
-  .get(getProducts);
-
+router.get('/', getProducts);
+router.get('/all', getAllProducts);
 router.get('/top', getTopProducts);
 
 // Category routes for frontend dropdowns
@@ -33,8 +33,7 @@ router.route('/:id/reviews')
   .post(protect, createProductReview);
 
 // Admin routes
-router.route('/')
-  .post(protect, admin, uploadProductImage, createProduct);
+router.post('/', protect, admin, uploadProductImage, createProduct);
 
 router.route('/:id')
   .put(protect, admin, uploadProductImage, updateProduct)
