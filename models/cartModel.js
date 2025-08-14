@@ -19,9 +19,7 @@ const cartItemSchema = new mongoose.Schema({
   },
   prescriptionFile: {
     type: String,
-    required: function() {
-      return this.drug && this.requiresPrescription;
-    }
+    required: false
   },
   requiresPrescription: {
     type: Boolean,

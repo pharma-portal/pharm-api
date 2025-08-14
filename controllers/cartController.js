@@ -44,26 +44,18 @@ const addDrugToCart = asyncHandler(async (req, res) => {
       res.status(401);
       throw new Error('Please login to purchase prescription drugs');
     }
-    
-    // Check if this is the prescription endpoint
-    const isPrescriptionEndpoint = req.originalUrl.includes('/prescription');
-    
-    if (!isPrescriptionEndpoint) {
-      res.status(400);
-      throw new Error('This drug requires a prescription. Please use the prescription endpoint: /api/cart/drug/prescription');
-    }
-    
-    // Check for prescription file
-    if (!req.file) {
-      res.status(400);
-      throw new Error('Prescription required for this drug');
-    }
-  } else {
-    // For non-prescription drugs, ensure no prescription file is uploaded
-    if (req.file) {
-      res.status(400);
-      throw new Error('Prescription file not needed for non-prescription drugs');
-    }
+  }
+
+  // Check if this is the prescription endpoint
+  const isPrescriptionEndpoint = req.originalUrl.includes('/prescription');
+  
+  // If using prescription endpoint, file is optional but can be uploaded
+  // If using regular endpoint, no file should be uploaded
+  if (isPrescriptionEndpoint && req.file) {
+    // File uploaded with prescription endpoint - this is fine
+  } else if (!isPrescriptionEndpoint && req.file) {
+    res.status(400);
+    throw new Error('Prescription file not needed for this endpoint. Use /api/cart/drug/prescription to upload prescription files.');
   }
 
   if (drug.inStock < quantity) {
