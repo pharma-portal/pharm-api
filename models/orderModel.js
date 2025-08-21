@@ -79,6 +79,24 @@ const orderSchema = new mongoose.Schema({
     enum: ['pending', 'success', 'failed', 'cancelled'],
     default: 'pending'
   },
+  hubtelClientReference: {
+    type: String
+  },
+  hubtelNetworkTransactionId: {
+    type: String
+  },
+  hubtelMerchantAccountNumber: {
+    type: String
+  },
+  hubtelCallbackUrl: {
+    type: String
+  },
+  hubtelCancellationUrl: {
+    type: String
+  },
+  hubtelReturnUrl: {
+    type: String
+  },
   totalPrice: {
     type: Number,
     required: true,

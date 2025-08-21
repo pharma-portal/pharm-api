@@ -1,12 +1,14 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import morgan from 'morgan';
 import connectDB from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import drugRoutes from './routes/drugRoutes.js';
 import cartRoutes from './routes/cartRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
+import hubtelCallbackRoutes from './routes/hubtelCallbackRoutes.js';
 import guestOrderRoutes from './routes/guestOrderRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
@@ -26,12 +28,43 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
+// HTTP request logging
+// Define tokens before using the middleware so we can include request body in logs
+morgan.token('body', (req) => {
+  try {
+    const redactKeys = new Set(['password', 'confirmpassword', 'token', 'authorization', 'secret', 'clientsecret', 'apikey', 'api_key']);
+    const safeBody = {};
+    if (req && req.body && typeof req.body === 'object') {
+      for (const key of Object.keys(req.body)) {
+        if (redactKeys.has(String(key).toLowerCase())) {
+          safeBody[key] = '[REDACTED]';
+        } else {
+          safeBody[key] = req.body[key];
+        }
+      }
+    }
+    const body = JSON.stringify(safeBody);
+    return body && body.length > 500 ? body.slice(0, 500) + '…' : body;
+  } catch (e) {
+    return '-';
+  }
+});
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(morgan('combined'));
+} else {
+  // Includes method, url, status, response time and a truncated body
+  app.use(morgan(':method :url :status :res[content-length] - :response-time ms body::body'));
+}
+
 // Pharmacy routes
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/drugs', drugRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/hubtel-callback', hubtelCallbackRoutes);
+console.log('🚀 Mounted /api/hubtel-callback route');
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/guest/orders', guestOrderRoutes);

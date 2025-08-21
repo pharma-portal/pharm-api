@@ -361,6 +361,132 @@ prescription: [file] (required for prescription drugs)
 }
 ```
 
+### Create Hubtel Checkout URL
+- **URL**: `/orders/checkout-url`
+- **Method**: `POST`
+- **Access**: Private
+- **Purpose**: Creates a Hubtel payment session and returns a checkout URL for frontend integration
+
+**Request Body**:
+```json
+{
+  "totalAmount": 0.10,
+  "description": "Online Checkout Test",
+  "callbackUrl": "http://13.62.90.17:5600/api/orders/hubtel-callback",
+  "returnUrl": "https://alleypharmacy.netlify.app",
+  "merchantAccountNumber": "2030840",
+  "cancellationUrl": "https://alleypharmacy.netlify.app",
+  "clientReference": "test14082025",
+  "apiUsername": "your_hubtel_api_username",
+  "apiKey": "your_hubtel_api_key"
+}
+```
+
+**Authentication Options:**
+- **Method 1**: Set `HUBTEL_CLIENT_ID` and `HUBTEL_CLIENT_SECRET` environment variables
+- **Method 2**: Include `apiUsername` and `apiKey` in the request body
+
+**Required Fields:**
+- `totalAmount`: Payment amount
+- `description`: Payment description
+- `callbackUrl`: URL for payment callbacks
+- `returnUrl`: URL to redirect after payment
+- `merchantAccountNumber`: Your Hubtel merchant account number
+- `clientReference`: Unique reference for the transaction
+
+**Optional Fields:**
+- `cancellationUrl`: URL to redirect if payment is cancelled
+- `apiUsername`: Your Hubtel API username (if not using environment variables)
+- `apiKey`: Your Hubtel API key (if not using environment variables)
+
+**What Happens:**
+1. Authenticates with Hubtel using your API credentials
+2. Calls `https://payproxyapi.hubtel.com/items/initiate` to create payment session
+3. Returns checkout URL for frontend integration
+
+**Success Response**: `200 OK`
+```json
+{
+  "success": true,
+  "message": "Hubtel checkout URL created successfully",
+  "checkoutUrl": "https://payproxyapi.hubtel.com/checkout/session_id",
+  "checkoutData": {
+    "amount": 0.10,
+    "description": "Online Checkout Test",
+    "callbackUrl": "http://13.62.90.17:5600/api/hubtel-callback",
+    "returnUrl": "https://alleypharmacy.netlify.app",
+    "merchantAccountNumber": "2030840",
+    "cancellationUrl": "https://alleypharmacy.netlify.app",
+    "clientReference": "test14082025",
+    "currency": "GHS",
+    "items": [
+      {
+        "name": "Online Checkout Test",
+        "quantity": 1,
+        "unitPrice": 0.10,
+        "totalPrice": 0.10
+      }
+    ]
+  },
+  "hubtelResponse": {
+    "status": "success",
+    "paymentId": "payment_123456",
+    "checkoutUrl": "https://payproxyapi.hubtel.com/checkout/session_id"
+  },
+  "paymentId": "payment_123456",
+  "status": "success"
+}
+```
+
+**Frontend Integration:**
+Use the `checkoutUrl` to redirect users to Hubtel's payment interface:
+```javascript
+// Redirect user to Hubtel payment
+window.location.href = response.data.checkoutUrl;
+```
+
+### Hubtel Payment Callback
+- **URL**: `/hubtel-callback`
+- **Method**: `POST`
+- **Access**: Public (called by Hubtel)
+- **Purpose**: Receives payment status updates from Hubtel
+
+**Callback Data Structure** (from Hubtel):
+```json
+{
+  "transactionId": "HUBTEL_TXN_123",
+  "clientReference": "test14082025",
+  "status": "SUCCESS",
+  "amount": 0.10,
+  "currency": "GHS",
+  "networkTransactionId": "NETWORK_TXN_789",
+  "description": "Online Checkout Test",
+  "responseCode": "0000",
+  "responseMessage": "Transaction successful",
+  "hubtelTransactionId": "HUBTEL_TXN_123",
+  "merchantAccountNumber": "2030840"
+}
+```
+
+**Response**: `200 OK`
+```json
+{
+  "success": true,
+  "message": "Callback processed successfully",
+  "orderId": "order_id",
+  "clientReference": "test14082025",
+  "status": "success",
+  "isPaid": true
+}
+```
+
+**What Happens:**
+1. Hubtel sends payment status to this endpoint
+2. System finds order by `clientReference`
+3. Updates order with payment details
+4. Marks order as paid if successful
+5. Returns confirmation to Hubtel
+
 ## Testing with Postman
 
 1. **Environment Setup**:

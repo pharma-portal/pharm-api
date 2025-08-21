@@ -73,19 +73,23 @@ const showPostmanInstructions = () => {
   console.log('=====================================');
   console.log('1. Import the Hubtel_Testing_Collection.json into Postman');
   console.log('2. Click on the collection name "Hubtel Integration Testing"');
-  console.log('3. Go to the "Variables" tab');
-  console.log('4. Update these variables:');
-  console.log('   - baseUrl: http://localhost:5000/api');
-  console.log('   - authToken: [Your JWT token from Step 1]');
-  console.log('   - orderId: [Order ID from Step 2]');
+  console.log('3. Set up environment variables in Postman:');
+  console.log('   - baseUrl: [Your API base URL]');
+  console.log('   - authToken: [Your JWT token]');
+  console.log('   - orderId: [Your order ID]');
   console.log('   - transactionId: [Your Hubtel transaction ID]');
-  console.log('   - clientReference: TEST_REF_123');
-  console.log('\n5. Test the endpoints in order:');
-  console.log('   - Get Available Orders');
+  console.log('   - clientReference: [Your client reference]');
+
+  console.log('\n4. Test the following endpoints:');
   console.log('   - Check Order Hubtel Status');
   console.log('   - Update Order with Hubtel Transaction');
-  console.log('   - Direct Transaction Status Check');
   console.log('   - Get All Orders with Hubtel Status (Admin)');
+  console.log('   - Create Hubtel Checkout URL');
+
+  console.log('\n5. For the Create Hubtel Checkout URL endpoint:');
+  console.log('   - This creates a checkout URL that redirects users to Hubtel payment');
+  console.log('   - The response includes a checkoutUrl that can be opened in a browser');
+  console.log('   - Use this for testing the complete payment flow');
 };
 
 // Main execution

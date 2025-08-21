@@ -151,7 +151,69 @@
             }
           ]
         }
-      }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Hubtel Checkout URL",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"totalAmount\": 0.10,\n  \"description\": \"Online Checkout Test\",\n  \"callbackUrl\": \"http://13.62.90.17:5600/api/orders/hubtel-callback\",\n  \"returnUrl\": \"https://alleypharmacy.netlify.app\",\n  \"merchantAccountNumber\": \"2030840\",\n  \"cancellationUrl\": \"https://alleypharmacy.netlify.app\",\n  \"clientReference\": \"test14082025\",\n  \"apiUsername\": \"{{hubtelApiUsername}}\",\n  \"apiKey\": \"{{hubtelApiKey}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/orders/checkout-url",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders",
+            "checkout-url"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Test Hubtel Callback Endpoint",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"HUBTEL_TXN_TEST_123\",\n  \"clientReference\": \"test14082025\",\n  \"status\": \"SUCCESS\",\n  \"amount\": 0.10,\n  \"currency\": \"GHS\",\n  \"networkTransactionId\": \"NETWORK_TXN_TEST_789\",\n  \"description\": \"Online Checkout Test\",\n  \"responseCode\": \"0000\",\n  \"responseMessage\": \"Transaction successful\",\n  \"hubtelTransactionId\": \"HUBTEL_TXN_TEST_123\",\n  \"merchantAccountNumber\": \"2030840\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/orders/hubtel-callback",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders",
+            "hubtel-callback"
+          ]
+        }
+      },
+      "response": []
     }
   ]
 } 

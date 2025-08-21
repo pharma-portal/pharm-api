@@ -12,7 +12,10 @@ import {
   checkHubtelStatus,
   updateHubtelTransaction,
   getOrdersWithHubtelStatus,
-  checkHubtelTransactionStatus
+  checkHubtelTransactionStatus,
+  initializeHubtelPayment,
+  createHubtelCheckoutUrl,
+  handleHubtelCallback
 } from '../controllers/orderController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
@@ -24,8 +27,13 @@ router.route('/')
 
 router.get('/myorders', protect, getMyOrders);
 
+// Hubtel callback endpoint moved to separate route file: /api/hubtel-callback
+
 // Hubtel routes
 router.get('/hubtel/all', protect, admin, getOrdersWithHubtelStatus);
+
+// Create Hubtel checkout URL
+router.post('/checkout-url', protect, createHubtelCheckoutUrl);
 
 router.route('/:id')
   .get(protect, getOrderById);
@@ -51,6 +59,10 @@ router.route('/:id/hubtel-status')
 
 router.route('/:id/hubtel-transaction')
   .put(protect, updateHubtelTransaction);
+
+// Initialize Hubtel payment
+router.route('/:id/hubtel-payment')
+  .post(protect, initializeHubtelPayment);
 
 // New Hubtel transaction status check route
 router.route('/hubtel/status/:transactionId')

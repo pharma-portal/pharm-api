@@ -437,20 +437,259 @@ const checkHubtelTransactionStatus = asyncHandler(async (req, res) => {
   }
 
   try {
+    console.log('🔍 Checking Hubtel transaction status for:', transactionId);
+    console.log('📋 Query params:', { clientReference, networkTransactionId });
+    
     const hubtelResponse = await hubtelService.checkTransactionStatus(
       transactionId,
       clientReference,
       networkTransactionId
     );
     
+    console.log('✅ Hubtel response received:', hubtelResponse);
+    
     res.json({
       transactionId,
       hubtelResponse,
-      mappedStatus: hubtelService.mapHubtelStatus(hubtelResponse.status)
+      mappedStatus: hubtelService.mapHubtelStatus(hubtelResponse.status || hubtelResponse.Status || 'UNKNOWN')
     });
   } catch (error) {
+    console.error('❌ Error in checkHubtelTransactionStatus:', error);
     res.status(500);
     throw new Error(`Failed to check Hubtel transaction status: ${error.message}`);
+  }
+});
+
+// @desc    Initialize Hubtel payment for order
+// @route   POST /api/orders/:id/hubtel-payment
+// @access  Private
+const initializeHubtelPayment = asyncHandler(async (req, res) => {
+  const {
+    totalAmount,
+    description,
+    callbackUrl,
+    returnUrl, // zuruUrl in your list
+    merchantAccountNumber,
+    cancellationUrl,
+    clientReference
+  } = req.body;
+
+  // Validate required fields
+  if (!totalAmount || !description || !callbackUrl || !returnUrl || !merchantAccountNumber || !clientReference) {
+    res.status(400);
+    throw new Error('Missing required Hubtel payment fields: totalAmount, description, callbackUrl, returnUrl, merchantAccountNumber, clientReference');
+  }
+
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    res.status(404);
+    throw new Error('Order not found');
+  }
+
+  // Check if the order belongs to the user
+  if (order.user.toString() !== req.user._id.toString()) {
+    res.status(401);
+    throw new Error('Not authorized');
+  }
+
+  // Check if order is already paid
+  if (order.isPaid) {
+    res.status(400);
+    throw new Error('Order is already paid');
+  }
+
+  // Validate that totalAmount matches order total
+  if (Math.abs(totalAmount - order.totalPrice) > 0.01) {
+    res.status(400);
+    throw new Error(`Total amount mismatch. Expected: ${order.totalPrice}, Received: ${totalAmount}`);
+  }
+
+  // Update order with Hubtel payment details
+  order.hubtelClientReference = clientReference;
+  order.hubtelMerchantAccountNumber = merchantAccountNumber;
+  order.hubtelCallbackUrl = callbackUrl;
+  order.hubtelCancellationUrl = cancellationUrl;
+  order.hubtelReturnUrl = returnUrl;
+  order.paymentMethod = 'Hubtel';
+
+  await order.save();
+
+  // Return the payment initialization data
+  res.json({
+    success: true,
+    message: 'Hubtel payment initialized successfully',
+    order: {
+      _id: order._id,
+      totalPrice: order.totalPrice,
+      status: order.status,
+      hubtelClientReference: order.hubtelClientReference,
+      hubtelMerchantAccountNumber: order.hubtelMerchantAccountNumber,
+      hubtelCallbackUrl: order.hubtelCallbackUrl,
+      hubtelCancellationUrl: order.hubtelCancellationUrl,
+      hubtelReturnUrl: order.hubtelReturnUrl
+    },
+    hubtelPaymentData: {
+      totalAmount,
+      description,
+      callbackUrl,
+      returnUrl,
+      merchantAccountNumber,
+      cancellationUrl,
+      clientReference
+    }
+  });
+});
+
+// @desc    Create Hubtel checkout URL
+// @route   POST /api/orders/checkout-url
+// @access  Private
+const createHubtelCheckoutUrl = asyncHandler(async (req, res) => {
+  const {
+    totalAmount,
+    description,
+    callbackUrl,
+    returnUrl,
+    merchantAccountNumber,
+    cancellationUrl,
+    clientReference,
+    // Optional API credentials
+    apiUsername,
+    apiKey
+  } = req.body;
+
+  // Validate required fields
+  if (!totalAmount || !description || !callbackUrl || !returnUrl || !merchantAccountNumber || !clientReference) {
+    res.status(400);
+    throw new Error('Missing required Hubtel checkout fields: totalAmount, description, callbackUrl, returnUrl, merchantAccountNumber, clientReference');
+  }
+
+  try {
+    // Set custom credentials if provided
+    if (apiUsername && apiKey) {
+      hubtelService.setCredentials(apiUsername, apiKey);
+    }
+
+    // Create checkout URL using Hubtel service (now uses Basic Auth directly)
+    const checkoutResult = await hubtelService.createCheckoutUrl({
+      totalAmount,
+      description,
+      callbackUrl,
+      returnUrl,
+      merchantAccountNumber,
+      cancellationUrl,
+      clientReference
+    });
+
+    res.json({
+      success: true,
+      message: 'Hubtel checkout URL created successfully',
+      checkoutUrl: checkoutResult.checkoutUrl,
+      checkoutData: checkoutResult.checkoutData,
+      hubtelResponse: checkoutResult.hubtelResponse,
+      paymentId: checkoutResult.paymentId,
+      status: checkoutResult.status
+    });
+  } catch (error) {
+    res.status(400);
+    throw new Error(`Failed to create checkout URL: ${error.message}`);
+  }
+});
+
+// @desc    Handle Hubtel payment callback
+// @route   POST /api/orders/hubtel-callback
+// @access  Public (no authentication required - called by Hubtel)
+const handleHubtelCallback = asyncHandler(async (req, res) => {
+  try {
+    console.log('📞 Hubtel callback received:', JSON.stringify(req.body, null, 2));
+    
+    const {
+      transactionId,
+      clientReference,
+      status,
+      amount,
+      currency,
+      networkTransactionId,
+      description,
+      // Additional Hubtel callback fields
+      responseCode,
+      responseMessage,
+      hubtelTransactionId,
+      merchantAccountNumber
+    } = req.body;
+
+    // Validate required fields
+    if (!clientReference || !status) {
+      console.error('❌ Missing required callback fields:', { clientReference, status });
+      res.status(400);
+      throw new Error('Missing required callback fields: clientReference, status');
+    }
+
+    // Find order by client reference
+    const order = await Order.findOne({ hubtelClientReference: clientReference });
+    
+    if (!order) {
+      console.error('❌ Order not found for client reference:', clientReference);
+      res.status(404);
+      throw new Error(`Order not found for client reference: ${clientReference}`);
+    }
+
+    // Update order with Hubtel callback data
+    order.hubtelStatus = status.toLowerCase();
+    order.hubtelTransactionId = transactionId || hubtelTransactionId;
+    order.hubtelNetworkTransactionId = networkTransactionId;
+    order.hubtelResponseCode = responseCode;
+    order.hubtelResponseMessage = responseMessage;
+    order.hubtelCallbackReceived = true;
+    order.hubtelCallbackReceivedAt = new Date();
+
+    // If payment is successful, mark order as paid
+    if (status.toLowerCase() === 'success' || status.toLowerCase() === 'completed') {
+      order.isPaid = true;
+      order.paidAt = new Date();
+      order.paymentResult = {
+        id: transactionId || hubtelTransactionId,
+        status: status,
+        update_time: new Date().toISOString(),
+        email_address: order.user?.email || 'hubtel@payment.com',
+        clientReference: clientReference,
+        networkTransactionId: networkTransactionId,
+        amount: amount,
+        currency: currency,
+        responseCode: responseCode,
+        responseMessage: responseMessage
+      };
+    }
+
+    // Save the updated order
+    await order.save();
+
+    console.log('✅ Order updated successfully:', {
+      orderId: order._id,
+      clientReference,
+      status,
+      isPaid: order.isPaid
+    });
+
+    // Send success response to Hubtel
+    res.status(200).json({
+      success: true,
+      message: 'Callback processed successfully',
+      orderId: order._id,
+      clientReference,
+      status: order.hubtelStatus,
+      isPaid: order.isPaid
+    });
+
+  } catch (error) {
+    console.error('❌ Error processing Hubtel callback:', error.message);
+    
+    // Send error response to Hubtel
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
@@ -467,5 +706,8 @@ export {
   checkHubtelStatus,
   updateHubtelTransaction,
   getOrdersWithHubtelStatus,
-  checkHubtelTransactionStatus
+  checkHubtelTransactionStatus,
+  initializeHubtelPayment,
+  createHubtelCheckoutUrl,
+  handleHubtelCallback
 }; 
