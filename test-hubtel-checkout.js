@@ -26,7 +26,7 @@ const testHubtelCheckout = async () => {
       "totalAmount": 0.10,
       "description": "Online Checkout Test",
       "callbackUrl": "http://13.62.90.17:5600/api/orders/hubtel-callback",
-      "returnUrl": "https://alleypharmacy.netlify.app",
+      "returnUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "merchantAccountNumber": "2030840",
       "cancellationUrl": "https://alleypharmacy.netlify.app",
       "clientReference": "test14082025"
@@ -67,7 +67,7 @@ const testHubtelCheckout = async () => {
       "totalAmount": 0.10,
       "description": "Online Checkout Test with API Credentials",
       "callbackUrl": "http://13.62.90.17:5600/api/orders/hubtel-callback",
-      "returnUrl": "https://alleypharmacy.netlify.app",
+      "returnUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "merchantAccountNumber": "2030840",
       "cancellationUrl": "https://alleypharmacy.netlify.app",
       "clientReference": "test14082025_creds",

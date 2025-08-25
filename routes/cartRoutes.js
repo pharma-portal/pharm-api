@@ -17,16 +17,16 @@ router.route('/')
   .get(optionalAuth, getCart)
   .delete(optionalAuth, clearCart);
 
+// Add prescription drug to cart (with prescription file) - MUST come before /:id route
+router.post('/drug/prescription', optionalAuth, uploadPrescription, addDrugToCart);
+
 // Add non-prescription drug to cart
 router.post('/drug', optionalAuth, addDrugToCart);
-
-// Add prescription drug to cart (with prescription file)
-router.post('/drug/prescription', optionalAuth, uploadPrescription, addDrugToCart);
 
 // Add mart product to cart
 router.post('/product', optionalAuth, addProductToCart);
 
-// Update and remove cart item routes
+// Update and remove cart item routes - MUST come after specific routes
 router.route('/:id')
   .put(optionalAuth, updateCartItem)
   .delete(optionalAuth, removeFromCart);

@@ -45,28 +45,44 @@ class HubtelService {
     }
   }
 
-  // Check transaction status using the new API endpoint
+  // Check transaction status using Basic Auth (same as payment initiation)
   async checkTransactionStatus(transactionId, clientReference = null, networkTransactionId = null) {
     try {
-      // Get authentication token first
-      const authToken = await this.getAuthToken();
+      // Use custom credentials if provided, otherwise use environment variables
+      const credentials = this.customCredentials || { 
+        clientId: process.env.HUBTEL_CLIENT_ID || this.clientId, 
+        clientSecret: process.env.HUBTEL_CLIENT_SECRET || this.clientSecret 
+      };
+
+      if (!credentials.clientId || !credentials.clientSecret) {
+        throw new Error('Hubtel API credentials not provided. Set HUBTEL_CLIENT_ID and HUBTEL_CLIENT_SECRET environment variables or use setCredentials() method.');
+      }
+
+      // Create Basic Auth header (same as your payment initiation)
+      const auth = Buffer.from(`${credentials.clientId}:${credentials.clientSecret}`).toString('base64');
       
       // Build query parameters
       const params = {};
       if (clientReference) params.clientReference = clientReference;
       if (networkTransactionId) params.networkTransactionId = networkTransactionId;
       
+      console.log('🔍 Checking transaction status with Basic Auth...');
+      console.log('Transaction ID:', transactionId);
+      console.log('Params:', params);
+      
       const response = await axios.get(
         `${this.baseURL}/transactions/${transactionId}/status`,
         {
           params,
           headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache'
           }
         }
       );
       
+      console.log('✅ Transaction status response received');
       return response.data;
     } catch (error) {
       console.error('Error checking Hubtel transaction status:', error.message);

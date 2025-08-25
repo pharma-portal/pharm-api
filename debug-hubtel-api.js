@@ -19,9 +19,9 @@ const testPayloads = [
       "totalAmount": 0.10,
       "description": "Online Checkout Test",
       "callbackUrl": "http://13.62.90.17:5600/api/orders/hubtel-callback",
-      "returnUrl": "https://alleypharmacy.netlify.app",
+      "returnUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "merchantAccountNumber": "2030840",
-      "cancellationUrl": "https://alleypharmacy.netlify.app",
+      "cancellationUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "clientReference": "test14082025"
     }
   },
@@ -31,9 +31,9 @@ const testPayloads = [
       "amount": 0.10,
       "description": "Online Checkout Test",
       "callbackUrl": "http://13.62.90.17:5600/api/orders/hubtel-callback",
-      "returnUrl": "https://alleypharmacy.netlify.app",
+      "returnUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "merchantAccountNumber": "2030840",
-      "cancellationUrl": "https://alleypharmacy.netlify.app",
+      "cancellationUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "clientReference": "test14082025"
     }
   },
@@ -43,9 +43,9 @@ const testPayloads = [
       "price": 0.10,
       "description": "Online Checkout Test",
       "callbackUrl": "http://13.62.90.17:5600/api/orders/hubtel-callback",
-      "returnUrl": "https://alleypharmacy.netlify.app",
+      "returnUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "merchantAccountNumber": "2030840",
-      "cancellationUrl": "https://alleypharmacy.netlify.app",
+      "cancellationUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "clientReference": "test14082025"
     }
   },
@@ -55,9 +55,9 @@ const testPayloads = [
       "value": 0.10,
       "description": "Online Checkout Test",
       "callbackUrl": "http://13.62.90.17:5600/api/orders/hubtel-callback",
-      "returnUrl": "https://alleypharmacy.netlify.app",
+      "returnUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "merchantAccountNumber": "2030840",
-      "cancellationUrl": "https://alleypharmacy.netlify.app",
+      "cancellationUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "clientReference": "test14082025"
     }
   },
@@ -67,9 +67,9 @@ const testPayloads = [
       "totalAmount": 0.10,
       "description": "Online Checkout Test",
       "callback_url": "http://13.62.90.17:5600/api/orders/hubtel-callback",
-      "return_url": "https://alleypharmacy.netlify.app",
+      "return_url": "https://alleypharmacy.netlify.app/order-confirmation",
       "merchantAccountNumber": "2030840",
-      "cancellation_url": "https://alleypharmacy.netlify.app",
+      "cancellation_url": "https://alleypharmacy.netlify.app/order-confirmation",
       "clientReference": "test14082025"
     }
   },
@@ -79,9 +79,9 @@ const testPayloads = [
       "totalAmount": 0.10,
       "description": "Online Checkout Test",
       "callbackUrl": "http://13.62.90.17:5600/api/orders/hubtel-callback",
-      "returnUrl": "https://alleypharmacy.netlify.app",
+      "returnUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "merchantAccountNumber": "2030840",
-      "cancellationUrl": "https://alleypharmacy.netlify.app",
+      "cancellationUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "client_reference": "test14082025"
     }
   },
@@ -91,9 +91,9 @@ const testPayloads = [
       "totalAmount": 0.10,
       "description": "Online Checkout Test",
       "callbackUrl": "http://13.62.90.17:5600/api/orders/hubtel-callback",
-      "returnUrl": "https://alleypharmacy.netlify.app",
+      "returnUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "merchant_account_number": "2030840",
-      "cancellationUrl": "https://alleypharmacy.netlify.app",
+      "cancellationUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "clientReference": "test14082025"
     }
   },
@@ -103,9 +103,9 @@ const testPayloads = [
       "totalAmount": 0.10,
       "description": "Online Checkout Test",
       "callbackUrl": "http://13.62.90.17:5600/api/orders/hubtel-callback",
-      "returnUrl": "https://alleypharmacy.netlify.app",
+      "returnUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "merchant_id": "2030840",
-      "cancellationUrl": "https://alleypharmacy.netlify.app",
+      "cancellationUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "clientReference": "test14082025"
     }
   },
@@ -115,9 +115,9 @@ const testPayloads = [
       "totalAmount": 0.10,
       "description": "Online Checkout Test",
       "callbackUrl": "http://13.62.90.17:5600/api/orders/hubtel-callback",
-      "returnUrl": "https://alleypharmacy.netlify.app",
+      "returnUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "merchantId": "2030840",
-      "cancellationUrl": "https://alleypharmacy.netlify.app",
+      "cancellationUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "clientReference": "test14082025"
     }
   },
@@ -127,9 +127,9 @@ const testPayloads = [
       "totalAmount": 0.10,
       "description": "Online Checkout Test",
       "callbackUrl": "http://13.62.90.17:5600/api/orders/hubtel-callback",
-      "returnUrl": "https://alleypharmacy.netlify.app",
+      "returnUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "merchantNumber": "2030840",
-      "cancellationUrl": "https://alleypharmacy.netlify.app",
+      "cancellationUrl": "https://alleypharmacy.netlify.app/order-confirmation",
       "clientReference": "test14082025"
     }
   }
