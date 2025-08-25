@@ -17,6 +17,7 @@ router.use((req, res, next) => {
   console.log(`🔍 Cart Route Request: ${req.method} ${req.originalUrl}`);
   console.log(`📍 Path: ${req.path}`);
   console.log(`🔗 Full URL: ${req.originalUrl}`);
+  console.log(`📱 User Agent: ${req.get('User-Agent')}`);
   next();
 });
 
@@ -27,13 +28,26 @@ router.route('/')
 
 // EXPLICIT ROUTES - Order matters! More specific routes must come first
 // Add prescription drug to cart (with prescription file) - MOST SPECIFIC
-router.post('/drug/prescription', optionalAuth, uploadPrescription, addDrugToCart);
+router.post('/drug/prescription', (req, res, next) => {
+  console.log('🎯 /drug/prescription route handler called');
+  console.log('📝 Request body:', req.body);
+  console.log('📁 Files:', req.files);
+  next();
+}, optionalAuth, uploadPrescription, addDrugToCart);
 
 // Add non-prescription drug to cart
-router.post('/drug', optionalAuth, addDrugToCart);
+router.post('/drug', (req, res, next) => {
+  console.log('🎯 /drug route handler called');
+  console.log('📝 Request body:', req.body);
+  next();
+}, optionalAuth, addDrugToCart);
 
 // Add mart product to cart
-router.post('/product', optionalAuth, addProductToCart);
+router.post('/product', (req, res, next) => {
+  console.log('🎯 /product route handler called');
+  console.log('📝 Request body:', req.body);
+  next();
+}, optionalAuth, addProductToCart);
 
 // Update and remove cart item routes - LEAST SPECIFIC (must come last)
 router.route('/:id')
