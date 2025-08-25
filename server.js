@@ -28,6 +28,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`🌐 Incoming Request: ${req.method} ${req.originalUrl}`);
+  console.log(`📍 Path: ${req.path}`);
+  console.log(`🔗 Full URL: ${req.originalUrl}`);
+  console.log(`📱 User Agent: ${req.get('User-Agent')}`);
+  next();
+});
+
 // HTTP request logging
 // Define tokens before using the middleware so we can include request body in logs
 morgan.token('body', (req) => {
@@ -59,15 +68,31 @@ if (process.env.NODE_ENV === 'production') {
 
 // Pharmacy routes
 app.use('/api/users', userRoutes);
+console.log('✅ Mounted /api/users route');
+
 app.use('/api/admin', adminRoutes);
+console.log('✅ Mounted /api/admin route');
+
 app.use('/api/drugs', drugRoutes);
+console.log('✅ Mounted /api/drugs route');
+
 app.use('/api/cart', cartRoutes);
+console.log('✅ Mounted /api/cart route');
+
 app.use('/api/orders', orderRoutes);
+console.log('✅ Mounted /api/orders route');
+
 app.use('/api/hubtel-callback', hubtelCallbackRoutes);
 console.log('🚀 Mounted /api/hubtel-callback route');
+
 app.use('/api/reviews', reviewRoutes);
+console.log('✅ Mounted /api/reviews route');
+
 app.use('/api/prescriptions', prescriptionRoutes);
+console.log('✅ Mounted /api/prescriptions route');
+
 app.use('/api/guest/orders', guestOrderRoutes);
+console.log('✅ Mounted /api/guest/orders route');
 
 // Product routes (unified)
 app.use('/api/products', productRoutes);
@@ -90,6 +115,33 @@ app.use(errorHandler);
 scheduleStatusUpdates();
 
 const PORT = process.env.PORT;
+
+// Function to list all registered routes
+const listRoutes = () => {
+  console.log('\n🚀 All Registered Routes:');
+  console.log('='.repeat(50));
+  
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) {
+      // Routes registered directly on the app
+      const methods = Object.keys(middleware.route.methods);
+      console.log(`${methods.join(',').toUpperCase()} ${middleware.route.path}`);
+    } else if (middleware.name === 'router') {
+      // Router middleware
+      const baseUrl = middleware.regexp.source.replace('^\\/','').replace('\\/?(?=\\/|$)','');
+      if (baseUrl) {
+        console.log(`📁 Router mounted at: /${baseUrl}`);
+      }
+    }
+  });
+  
+  console.log('='.repeat(50));
+};
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // List all routes after server starts
+  setTimeout(listRoutes, 1000);
 }); 
