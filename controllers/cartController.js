@@ -147,9 +147,10 @@ const addProductToCart = asyncHandler(async (req, res) => {
     throw new Error('Product not found');
   }
 
-  if (product.countInStock < quantity) {
+  // Check if stock is available and sufficient
+  if (!product.countInStock || product.countInStock < quantity) {
     res.status(400);
-    throw new Error('Not enough stock');
+    throw new Error(`Not enough stock. Available: ${product.countInStock || 0}, Requested: ${quantity}`);
   }
 
   if (req.user) {
@@ -239,9 +240,10 @@ const updateCartItem = asyncHandler(async (req, res) => {
           throw new Error('Product not found');
         }
         
-        if (product.countInStock < quantity) {
+        // Check if stock is available and sufficient
+        if (!product.countInStock || product.countInStock < quantity) {
           res.status(400);
-          throw new Error('Not enough stock');
+          throw new Error(`Not enough stock. Available: ${product.countInStock || 0}, Requested: ${quantity}`);
         }
       }
 
