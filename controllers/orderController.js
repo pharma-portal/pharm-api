@@ -445,13 +445,21 @@ const checkHubtelTransactionStatus = asyncHandler(async (req, res) => {
       clientReference,
       networkTransactionId
     );
-    
+
+    if (!hubtelResponse) {
+      res.status(502);
+      throw new Error('Hubtel did not return a response');
+    }
+
     console.log('✅ Hubtel response received:', hubtelResponse);
-    
+
+    // Normalize status field safely
+    const rawStatus = hubtelResponse.status || hubtelResponse.Status || hubtelResponse.statusCode || 'UNKNOWN';
+
     res.json({
       transactionId,
       hubtelResponse,
-      mappedStatus: hubtelService.mapHubtelStatus(hubtelResponse.status || hubtelResponse.Status || 'UNKNOWN')
+      mappedStatus: hubtelService.mapHubtelStatus(rawStatus)
     });
   } catch (error) {
     console.error('❌ Error in checkHubtelTransactionStatus:', error);
@@ -459,6 +467,7 @@ const checkHubtelTransactionStatus = asyncHandler(async (req, res) => {
     throw new Error(`Failed to check Hubtel transaction status: ${error.message}`);
   }
 });
+
 
 // @desc    Initialize Hubtel payment for order
 // @route   POST /api/orders/:id/hubtel-payment
