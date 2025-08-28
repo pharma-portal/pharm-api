@@ -27,38 +27,63 @@ class HubtelService {
 
 /** Check transaction status */
 async checkTransactionStatus(transactionId) {
-  try {
-    const merchantAccount = process.env.HUBTEL_MERCHANT_ACCOUNT; 
-    const clientId = process.env.HUBTEL_CLIENT_ID;
-    const clientSecret = process.env.HUBTEL_CLIENT_SECRET;
+    try {
+      const merchantAccount = process.env.HUBTEL_MERCHANT_ACCOUNT; 
+      const clientId = process.env.HUBTEL_CLIENT_ID;
+      const clientSecret = process.env.HUBTEL_CLIENT_SECRET;
 
-    if (!merchantAccount) {
-      throw new Error("Missing HUBTEL_MERCHANT_ACCOUNT in env");
-    }
-
-    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
-
-    const response = await axios.get(
-      `https://api-txnstatus.hubtel.com/transactions/${merchantAccount}/status?clientReference=${transactionId}`,
-      {
-        headers: {
-          Authorization: `Basic ${auth}`,
-        },
+      if (!merchantAccount) {
+        throw new Error("Missing HUBTEL_MERCHANT_ACCOUNT in env");
       }
-    );
 
-    return response.data; // ✅ return API data
-  } catch (error) {
-    console.error("❌ Hubtel API error details:", {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      url: error.config?.url,
-    });
+      const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
 
-    throw new Error("Failed to check transaction status");
+      const response = await axios.get(
+        `https://api-txnstatus.hubtel.com/transactions/${merchantAccount}/status?clientReference=${transactionId}`,
+        {
+          headers: {
+            Authorization: `Basic ${auth}`,
+          },
+        }
+      );
+
+      return response.data; // ✅ return API data
+    } catch (error) {
+      console.error("❌ Hubtel API error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: error.config?.url,
+      });
+
+      throw new Error("Failed to check transaction status");
+    }
   }
-}
+
+  // ✅ Add this function
+  mapHubtelStatus(status) {
+    const normalized = (status || "").toString().toLowerCase();
+
+    switch (normalized) {
+      case "success":
+      case "completed":
+      case "paid":
+        return "SUCCESS";
+
+      case "pending":
+      case "processing":
+        return "PENDING";
+
+      case "failed":
+      case "declined":
+      case "cancelled":
+        return "FAILED";
+
+      default:
+        return "UNKNOWN";
+    }
+  }
+
 
 
   /** Create checkout URL */

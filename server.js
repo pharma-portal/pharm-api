@@ -68,31 +68,22 @@ if (process.env.NODE_ENV === 'production') {
 
 // Pharmacy routes
 app.use('/api/users', userRoutes);
-console.log('✅ Mounted /api/users route');
 
 app.use('/api/admin', adminRoutes);
-console.log('✅ Mounted /api/admin route');
 
 app.use('/api/drugs', drugRoutes);
-console.log('✅ Mounted /api/drugs route');
 
 app.use('/api/cart', cartRoutes);
-console.log('✅ Mounted /api/cart route');
 
 app.use('/api/orders', orderRoutes);
-console.log('✅ Mounted /api/orders route');
 
 app.use('/api/hubtel-callback', hubtelCallbackRoutes);
-console.log('🚀 Mounted /api/hubtel-callback route');
 
 app.use('/api/reviews', reviewRoutes);
-console.log('✅ Mounted /api/reviews route');
 
 app.use('/api/prescriptions', prescriptionRoutes);
-console.log('✅ Mounted /api/prescriptions route');
 
 app.use('/api/guest/orders', guestOrderRoutes);
-console.log('✅ Mounted /api/guest/orders route');
 
 // Product routes (unified)
 app.use('/api/products', productRoutes);
