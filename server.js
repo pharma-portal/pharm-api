@@ -85,12 +85,12 @@ app.use('/api/prescriptions', prescriptionRoutes);
 
 app.use('/api/guest/orders', guestOrderRoutes);
 
+
 // Product routes (unified)
 app.use('/api/products', productRoutes);
 
 // Mart routes
 app.use('/api/mart/products', productRoutes);
-app.use('/api/categories', categoryRoutes);
 
 // Analytics routes
 app.use('/api/analytics', analyticsRoutes);
@@ -107,32 +107,6 @@ scheduleStatusUpdates();
 
 const PORT = process.env.PORT;
 
-// Function to list all registered routes
-const listRoutes = () => {
-  console.log('\n🚀 All Registered Routes:');
-  console.log('='.repeat(50));
-  
-  app._router.stack.forEach((middleware) => {
-    if (middleware.route) {
-      // Routes registered directly on the app
-      const methods = Object.keys(middleware.route.methods);
-      console.log(`${methods.join(',').toUpperCase()} ${middleware.route.path}`);
-    } else if (middleware.name === 'router') {
-      // Router middleware
-      const baseUrl = middleware.regexp.source.replace('^\\/','').replace('\\/?(?=\\/|$)','');
-      if (baseUrl) {
-        console.log(`📁 Router mounted at: /${baseUrl}`);
-      }
-    }
-  });
-  
-  console.log('='.repeat(50));
-};
-
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  
-  // List all routes after server starts
-  setTimeout(listRoutes, 1000);
 }); 
