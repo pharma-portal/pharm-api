@@ -39,7 +39,7 @@ async checkTransactionStatus(transactionId) {
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
 
     const response = await axios.get(
-      `https://api.hubtel.com/v1/merchantaccount/merchants/${merchantAccount}/transactions/${transactionId}/status`,
+      `https://api-txnstatus.hubtel.com/transactions/${merchantAccount}/status?clientReference=${transactionId}`,
       {
         headers: {
           Authorization: `Basic ${auth}`,

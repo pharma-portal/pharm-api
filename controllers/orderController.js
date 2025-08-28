@@ -429,7 +429,8 @@ const getOrdersWithHubtelStatus = asyncHandler(async (req, res) => {
 // @access  Private
 const checkHubtelTransactionStatus = asyncHandler(async (req, res) => {
   const { transactionId } = req.params;
-  const { clientReference, networkTransactionId } = req.query;
+  console.log("transactionId", transactionId)
+  //const { clientReference, networkTransactionId } = req.query;
 
   if (!transactionId) {
     res.status(400);
@@ -438,12 +439,12 @@ const checkHubtelTransactionStatus = asyncHandler(async (req, res) => {
 
   try {
     console.log('🔍 Checking Hubtel transaction status for:', transactionId);
-    console.log('📋 Query params:', { clientReference, networkTransactionId });
+    //console.log('📋 Query params:', { clientReference, networkTransactionId });
     
     const hubtelResponse = await hubtelService.checkTransactionStatus(
       transactionId,
-      clientReference,
-      networkTransactionId
+      //clientReference,
+      //networkTransactionId
     );
 
     if (!hubtelResponse) {
